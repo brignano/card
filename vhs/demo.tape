@@ -1,6 +1,7 @@
 # Demo recording for `npx brignano`.
 # Regenerate with:  vhs vhs/demo.tape   (requires: brew install vhs)
-# Renders the gradient banner, the live card, menu navigation, and a contact QR.
+# Renders the animated banner, the live card, menu navigation, a contact QR, and
+# the menu returning for a second action.
 
 Output demo.gif
 Require node
@@ -51,3 +52,11 @@ Sleep 800ms
 # Land on "Show a contact QR code" and select it.
 Enter
 Sleep 3s
+
+# The menu comes back after every action — finish by choosing Quit.
+Wait+Screen /Anything else/
+Sleep 800ms
+Up
+Sleep 800ms
+Enter
+Sleep 2s

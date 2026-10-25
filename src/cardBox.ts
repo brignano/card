@@ -2,63 +2,61 @@ import boxen from 'boxen';
 import chalk from 'chalk';
 import { profile } from './data.js';
 import type { LiveData } from './live.js';
+import { accent, palette, soft } from './ui.js';
 
 // Right-aligns labels to a common width so the values line up cleanly.
-const LABEL_WIDTH = 10;
+const LABEL_WIDTH = 8;
 function label(text: string): string {
-  return chalk.white.bold(text.padStart(LABEL_WIDTH) + ':');
+  return chalk.gray(text.padStart(LABEL_WIDTH));
+}
+
+function row(name: string, value: string): string {
+  return `${label(name)}  ${value}`;
 }
 
 interface CardOptions {
   live?: LiveData | null;
-  tagline: string;
 }
 
 // Builds the boxen business card. `live` is optional — when absent the live
 // line is simply omitted, so the card looks intentional with or without network.
-export function renderCard({ live, tagline }: CardOptions): string {
-  // Violet accent matches brignano.io (violet-400 #a78bfa on dark).
-  const accent = chalk.hex('#a78bfa');
+export function renderCard({ live }: CardOptions): string {
   const lines = [
-    accent.bold(profile.fullName) + '  ' + chalk.gray(profile.handle),
+    accent.bold(profile.fullName),
+    `${chalk.white(profile.title)} ${chalk.gray('·')} ${chalk.white.bold(profile.org)}`,
     '',
-    `${label('Work')}  ${profile.title} ${chalk.gray('at')} ${chalk
-      .hex('#3A5A78')
-      .bold(profile.org)}`,
-    '',
-    `${label('GitHub')}  ${chalk.gray('https://github.com/')}${chalk.green(
-      profile.username,
-    )}`,
-    `${label('LinkedIn')}  ${chalk.gray('https://linkedin.com/in/')}${chalk.blue(
-      profile.username,
-    )}`,
-    `${label('Website')}  ${chalk.cyan(profile.website)}`,
+    row('GitHub', `${chalk.gray('https://github.com/')}${chalk.white(profile.username)}`),
+    row(
+      'LinkedIn',
+      `${chalk.gray('https://linkedin.com/in/')}${chalk.white(profile.username)}`,
+    ),
+    row('Website', soft(profile.website)),
+    row('Email', soft(profile.email)),
   ];
 
   if (live) {
-    lines.push('');
     const parts = [
-      `${chalk.yellow('★')} ${chalk.bold(live.followers)} followers`,
-      `${chalk.bold(live.publicRepos)} repos`,
+      `${chalk.yellow('★')} ${chalk.white.bold(live.followers)} followers`,
+      `${chalk.white.bold(live.publicRepos)} repos`,
     ];
     if (live.latestRepo) {
-      parts.push(`latest: ${chalk.green(live.latestRepo.name)}`);
+      parts.push(`latest ${accent(live.latestRepo.name)}`);
     }
-    lines.push(`${label('Live')}  ${chalk.gray(parts.join(' · '))}`);
+    lines.push('', row('GitHub', chalk.gray(parts.join('  ·  '))));
   }
 
   lines.push(
     '',
-    `${label('Card')}  ${chalk.red('npx')} ${chalk.white('brignano')}`,
-    '',
-    chalk.italic(tagline),
+    row('Card', `${chalk.gray('$')} ${chalk.white('npx')} ${accent.bold('brignano')}`),
   );
 
   return boxen(lines.join('\n'), {
-    margin: 1,
+    margin: { top: 1, bottom: 1, left: 0, right: 0 },
     float: 'center',
-    padding: 1,
+    padding: { top: 1, bottom: 1, left: 3, right: 3 },
     borderStyle: 'round',
-    borderColor: 'gray',
+    borderColor: palette.border,
+    title: soft(profile.handle),
+    titleAlignment: 'center',
   });
 }
