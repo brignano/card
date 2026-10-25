@@ -1,12 +1,16 @@
 # Demo recording for `npx brignano`.
-# Regenerate with:  vhs vhs/demo.tape   (requires: brew install vhs)
+# Regenerate from the Actions tab ("Demo GIF" → "Run workflow"), or locally with
+# `vhs vhs/demo.tape` if you have VHS installed.
 # Renders the animated banner, the live card, menu navigation, a contact QR, and
 # the menu returning for a second action.
 
 Output demo.gif
 Require node
 
-Set Shell "zsh"
+Set Shell "bash"
+
+# Advertise truecolor so the gradient isn't downsampled in the recording.
+Env COLORTERM "truecolor"
 Set FontSize 14
 Set Width 1000
 Set Height 1000
@@ -15,11 +19,16 @@ Set Theme "GitHub Dark"
 Set TypingSpeed 55ms
 Set WaitTimeout 30s
 
-# Pre-warm the npx cache off-camera so the real run doesn't show an install prompt.
+# Off-camera setup. GitHub runners export CI=true, which (correctly) turns the
+# card into its non-interactive mode — unset it so the recording shows the real
+# experience. Then warm up (module cache, figlet font) so the real run starts
+# crisply.
 Hide
-Type "npx --yes brignano --no-prompt >/dev/null 2>&1"
+Type "unset CI"
 Enter
-Sleep 15s
+Type "npx brignano --no-prompt >/dev/null 2>&1"
+Enter
+Sleep 3s
 Type "clear"
 Enter
 Show

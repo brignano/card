@@ -97,6 +97,11 @@ node dist/card.js
 > TypeScript directly, no build step), or `npm run build` first. To exercise the
 > published package instead, run `npx brignano` from any other directory.
 
+The recording in `demo.gif` is produced by `vhs/demo.tape`. Re-record it from
+the Actions tab (**Demo GIF → Run workflow**) after a visual change lands; the
+workflow renders it on a Linux runner and pushes the new file back, so VHS
+doesn't need to be installed locally.
+
 Source lives in `src/` (split into small modules — `card.ts` is the entry/`bin`
 target) and compiles to `dist/` via `tsc`. `npm run dev` runs the TypeScript
 directly through `tsx`; `npm run lint` and `npm run format` use
