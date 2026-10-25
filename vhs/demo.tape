@@ -3,14 +3,14 @@
 # `vhs vhs/demo.tape` if you have VHS installed.
 # Renders the animated banner, the live card, menu navigation, a contact QR, and
 # the menu returning for a second action.
+#
+# VHS only honours `Set` directives that come before any other command (an `Env`
+# or `Type` ends the settings block), so keep every `Set` up here.
 
 Output demo.gif
 Require node
 
 Set Shell "bash"
-
-# Advertise truecolor so the gradient isn't downsampled in the recording.
-Env COLORTERM "truecolor"
 Set FontSize 14
 Set Width 1000
 Set Height 1000
@@ -18,6 +18,9 @@ Set Padding 20
 Set Theme "GitHub Dark"
 Set TypingSpeed 55ms
 Set WaitTimeout 30s
+
+# Advertise truecolor so the gradient isn't downsampled in the recording.
+Env COLORTERM "truecolor"
 
 # Off-camera setup. GitHub runners export CI=true, which (correctly) turns the
 # card into its non-interactive mode — unset it so the recording shows the real
@@ -62,9 +65,9 @@ Sleep 800ms
 Enter
 Sleep 3s
 
-# The menu comes back after every action — finish by choosing Quit.
-Wait+Screen /Anything else/
-Sleep 800ms
+# The menu comes back right after the QR prints ("Anything else?") — finish by
+# choosing Quit. `Up` from the top of the list wraps to it.
+Sleep 1s
 Up
 Sleep 800ms
 Enter
