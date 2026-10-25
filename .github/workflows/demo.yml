@@ -1,0 +1,45 @@
+# Re-records demo.gif on a Linux runner, so nobody needs VHS, ttyd or ffmpeg
+# installed locally (and it works the same from Windows, macOS or Linux).
+#
+# Run it from the Actions tab ("Demo GIF" → "Run workflow") after a visual
+# change lands on main. It builds the current checkout, drives it with
+# vhs/demo.tape, and pushes the new recording back to the branch it ran on.
+
+name: Demo GIF
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Use Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22.x'
+      - name: Install & Build
+        run: |
+          npm ci
+          npm run build
+      # Installs vhs, ttyd and ffmpeg, then renders the tape. Inside the repo,
+      # `npx brignano` resolves to the freshly built dist/, not the npm release.
+      - name: Record
+        uses: charmbracelet/vhs-action@v2
+        with:
+          path: vhs/demo.tape
+      - name: Commit the new recording
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add demo.gif
+          if git diff --cached --quiet; then
+            echo "demo.gif is unchanged"
+            exit 0
+          fi
+          git commit -m "Regenerate demo.gif"
+          git push
