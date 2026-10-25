@@ -42,8 +42,10 @@ The hex values live in one place, `src/tokens.ts`, named after the CSS custom
 properties they mirror; the dark set is the default and the light set is picked
 when the terminal advertises a light background via `COLORFGBG`.
 
-Icons fall back to ASCII on consoles whose fonts can't draw them (the legacy
-Windows console, for one), so nothing ever renders as an empty box.
+Icons come in three tiers so nothing ever renders as an empty box: full Unicode
+where the terminal supports it; a set drawn from the blocks the legacy Windows
+console's font does cover (it draws `★`, `›` and arrows fine, just not `❯` or
+`✔`); and plain ASCII on the Linux kernel console.
 
 ## CLI
 

@@ -33,20 +33,32 @@ export const mark = chalk.hex(tokens.mark[1]);
 
 // --- Glyphs -------------------------------------------------------------------
 
-// True when the console can show the box-drawing and symbol glyphs we use.
-// Mirrors the check `figures` makes, read back from its result.
-export const unicode = figures.pointer === '❯';
+// Three tiers, because "can this console draw Unicode" is not a yes/no. The
+// legacy Windows console (cmd.exe with Consolas) draws box-drawing, arrows,
+// geometric shapes and ★ just fine; what it lacks is the Dingbats block (❯ ✔ ✖)
+// and ⏎. So instead of dropping straight to ASCII there, it gets a set drawn
+// from the blocks its font covers. Only terminals `figures` deems Unicode-less
+// outside Windows (the Linux kernel console) fall all the way to ASCII.
+export type GlyphTier = 'full' | 'basic' | 'ascii';
 
-// `figures` swaps in ASCII on consoles whose fonts lack these (the legacy
-// Windows console in particular), so an icon never renders as an empty box.
-// Its star fallback is still outside those fonts, so that one is ours.
-export const glyph = {
-  pointer: figures.pointer,
-  tick: figures.tick,
-  cross: figures.cross,
-  warning: figures.warning,
-  star: unicode ? figures.star : '*',
-} as const;
+export const tier: GlyphTier =
+  figures.pointer === '❯' ? 'full' : process.platform === 'win32' ? 'basic' : 'ascii';
+
+const GLYPHS = {
+  pointer: { full: '❯', basic: '›', ascii: '>' },
+  tick: { full: '✔', basic: '√', ascii: '√' },
+  cross: { full: '✖', basic: '×', ascii: '×' },
+  // ▲ is the design system's own "degraded" symbol, and it is in every console font.
+  warning: { full: '▲', basic: '▲', ascii: '!' },
+  star: { full: '★', basic: '★', ascii: '*' },
+  // Key names for the menu's help line (inquirer hardcodes ↑↓ and ⏎).
+  arrows: { full: '↑↓', basic: '↑↓', ascii: 'up/down' },
+  enter: { full: '⏎', basic: 'enter', ascii: 'enter' },
+} as const satisfies Record<string, Record<GlyphTier, string>>;
+
+export const glyph: { [K in keyof typeof GLYPHS]: string } = Object.fromEntries(
+  Object.entries(GLYPHS).map(([name, byTier]) => [name, byTier[tier]]),
+) as { [K in keyof typeof GLYPHS]: string };
 
 // --- Layout -------------------------------------------------------------------
 
