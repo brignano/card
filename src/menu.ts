@@ -3,7 +3,7 @@ import clipboard from 'clipboardy';
 import open from 'open';
 import { profile } from './data.js';
 import { renderQr } from './qrcode.js';
-import { danger, glyph, ink, link, soft, success, unicode } from './ui.js';
+import { danger, glyph, ink, link, soft, success } from './ui.js';
 import { buildVCard, writeAndOpenVCard } from './vcard.js';
 
 // Every state ships with an icon and a word (design system §3): forest for
@@ -127,23 +127,19 @@ export async function promptForAction(message: string): Promise<MenuAction> {
     pageSize: choices.length,
     // Cobalt is the "you can act on this" hue; the selected row and the final
     // answer wear it. The done prefix is forest, like every other confirmation.
-    // The cursor icon is left to inquirer, which already falls back to ASCII on
-    // consoles that can't draw it.
     theme: {
       prefix: { idle: link(glyph.pointer), done: success(glyph.tick) },
+      icon: { cursor: glyph.pointer },
       style: {
         message: (text: string) => ink.bold(text),
         highlight: (text: string) => link.bold(text),
         answer: (text: string) => link(text),
         description: (text: string) => soft(`  ${text}`),
-        // inquirer hardcodes ↑↓ and ⏎ here; spell them out where the console
-        // can't draw them.
+        // inquirer hardcodes ↑↓ and ⏎ here; swap in whatever this console can draw.
         keysHelpTip: (keys: [string, string][]) =>
           keys
             .map(([key, action]) => {
-              const shown = unicode
-                ? key
-                : key.replace('↑↓', 'up/down').replace('⏎', 'enter');
+              const shown = key.replace('↑↓', glyph.arrows).replace('⏎', glyph.enter);
               return `${ink.bold(shown)} ${soft(action)}`;
             })
             .join(soft(' • ')),
