@@ -18,7 +18,7 @@ export const profile = {
 
 // A list the compiler knows has at least one element, so `pick` can never be
 // handed something it has no safe answer for.
-type NonEmpty<T> = readonly [T, ...T[]];
+export type NonEmpty<T> = readonly [T, ...T[]];
 
 // Rotating taglines — one is picked per run so repeat visitors see variety.
 export const taglines: NonEmpty<string> = [
@@ -29,12 +29,15 @@ export const taglines: NonEmpty<string> = [
   'Good engineering is mostly good taste applied consistently. Say hello.',
 ];
 
-// Small easter-egg facts, shown occasionally below the card.
+// Small easter-egg facts, shown below the card.
 export const funFacts: NonEmpty<string> = [
   'This card is open source — `npx brignano --help` shows every trick.',
-  'Tip: scan the QR with your phone to save my contact instantly.',
-  'The live stats above are pulled fresh from GitHub (with a strict timeout).',
+  'Scan the contact QR with your phone to save my details instantly.',
 ];
+
+// Only makes sense when the card actually shows the live GitHub line.
+export const liveFact =
+  'The live stats above are pulled fresh from GitHub (with a strict timeout).';
 
 // Deterministic-enough pick without Math.random (kept simple + dependency-free).
 // The `?? items[0]` fallback is unreachable for a NonEmpty list, but it keeps the

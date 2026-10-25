@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 
-import chalk from 'chalk';
 import { animateBanner, renderBanner } from './banner.js';
 import { renderCard } from './cardBox.js';
-import { funFacts, pick, profile, taglines } from './data.js';
+import { funFacts, liveFact, type NonEmpty, pick, profile, taglines } from './data.js';
 import {
   isInteractive,
   parseFlags,
@@ -12,10 +11,20 @@ import {
   shouldFetchLive,
   unknownFlags,
 } from './env.js';
-import { fetchLive } from './live.js';
-import { promptForAction, sendEmail, viewResume } from './menu.js';
+import { fetchLive, type LiveData } from './live.js';
+import { promptForAction, quit, sendEmail, viewResume } from './menu.js';
 import { renderQr } from './qrcode.js';
 import { reveal, sleep } from './reveal.js';
+import {
+  attention,
+  center,
+  glyph,
+  ink,
+  link,
+  mark,
+  soft,
+  withHiddenCursor,
+} from './ui.js';
 import { writeAndOpenVCard } from './vcard.js';
 
 function printHelp(): void {
@@ -30,6 +39,12 @@ function printHelp(): void {
   console.log('      --no-animation  Render instantly, skip the reveal animation');
   console.log('      --no-prompt     Show the card only (non-interactive)');
   console.log('  -d, --download      Deprecated alias for --view\n');
+}
+
+function farewell(): void {
+  console.log(
+    `\n${center(`${mark(glyph.star)} ${ink('Thanks for stopping by — have a great day!')}`)}\n`,
+  );
 }
 
 async function main(): Promise<void> {
@@ -54,14 +69,16 @@ async function main(): Promise<void> {
   }
   if (flags.view || flags.download) {
     if (flags.download) {
-      console.warn('Note: --download is deprecated; opening the resume instead.');
+      console.warn(
+        `${attention(`${glyph.warning} Note:`)} --download is deprecated; opening the resume instead.`,
+      );
     }
     return viewResume();
   }
   if (flags.email) return sendEmail();
   if (flags.qr) {
     console.log(await renderQr(profile.website));
-    console.log(chalk.gray(`  ${profile.website}\n`));
+    console.log(`  ${link(profile.website)}\n`);
     return;
   }
   if (flags.vcard) return writeAndOpenVCard();
@@ -73,33 +90,52 @@ async function main(): Promise<void> {
   // overlaps the banner render. Skipped entirely when non-interactive/CI.
   const livePromise = shouldFetchLive(flags) ? fetchLive() : Promise.resolve(null);
 
-  // Banner first: an animated violet shimmer when we can animate, otherwise the
-  // static gradient.
+  // Banner first: a light-sweep reveal when we can animate, otherwise the static
+  // gradient. Both are centered on the terminal, like the card below them.
+  const tagline = pick(taglines);
+  console.log();
+  let live: LiveData | null;
   if (animate) {
-    await animateBanner();
-    await sleep(120);
+    live = await withHiddenCursor(async () => {
+      await animateBanner(tagline);
+      // Card, enriched with whatever the (bounded) live fetch returned.
+      const data = await livePromise;
+      await reveal(renderCard({ live: data }), 30, true);
+      return data;
+    });
   } else {
-    console.log(renderBanner());
+    console.log(renderBanner(tagline));
+    live = await livePromise;
+    console.log(renderCard({ live }));
   }
 
-  // Card, enriched with whatever the (bounded) live fetch returned.
-  const live = await livePromise;
-  const tagline = pick(taglines);
-  await reveal(renderCard({ live, tagline }), 30, animate);
-
-  console.log(`Tip: ${chalk.cyanBright.bold('cmd/ctrl + click')} the links above.`);
-  console.log(chalk.gray(`     ${pick(funFacts)}\n`));
+  // The "live stats" fact only makes sense when the live line is on the card.
+  const facts: NonEmpty<string> = live ? [...funFacts, liveFact] : funFacts;
+  console.log(
+    center(`${soft('Tip:')} ${ink.bold('cmd/ctrl + click')} ${soft('the links above.')}`),
+  );
+  console.log(center(soft(pick(facts))));
+  console.log();
 
   if (!interactive) return;
 
-  const action = await promptForAction();
-  await action();
+  // The menu comes back after every action, so visitors can copy an email, open
+  // a link and grab the QR in one sitting. "Quit" (or Ctrl+C) ends it.
+  let message = 'What would you like to do?';
+  for (;;) {
+    const action = await promptForAction(message);
+    if (action === quit) break;
+    await action();
+    message = 'Anything else?';
+    await sleep(150);
+  }
+  farewell();
 }
 
 main().catch((err: unknown) => {
   // Ctrl+C / Esc at the menu is a normal way to leave, not a crash.
   if (err instanceof Error && err.name === 'ExitPromptError') {
-    console.log('\nHave a great day!\n');
+    farewell();
     return;
   }
   const message = err instanceof Error ? err.message : String(err);

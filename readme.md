@@ -5,7 +5,7 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/brignano/card/ci.yml?branch=main&style=flat-square&label=ci)](https://github.com/brignano/card/actions/workflows/ci.yml)
 [![license](https://img.shields.io/npm/l/brignano?style=flat-square&color=8b5cf6)](LICENSE)
 
-An interactive terminal business card for Anthony Brignano. Run it with `npx` to get a gradient ASCII-art intro, a styled card with **live GitHub stats**, and quick actions — copy my email, open my socials, save my contact, or grab a scannable QR code.
+An interactive terminal business card for Anthony Brignano. Run it with `npx` to get an animated, centered ASCII-art intro, a styled card with **live GitHub stats**, and quick actions — copy my email, open my socials, save my contact, or grab a scannable QR code.
 
 ## Quick start
 
@@ -17,19 +17,33 @@ npx brignano
 
 ## What it does
 
-- **Gradient ASCII banner** (`figlet` + `gradient-string`) with a smooth line-by-line reveal animation.
-- **Styled business card** (`boxen` + `chalk`) with name, role, and links.
+- **Animated splash** (`figlet` + `chalk`): a light sweeps across the lettering to reveal the larch-amber monogram, a glint follows, and a tagline fades in beneath. Everything is centered on your terminal, and the banner steps down to a smaller font on narrow windows.
+- **Styled business card** (`boxen` + `chalk`) with name, role, links and email, revealed line by line under the banner.
 - **Live GitHub stats** — follower/repo counts and my latest repo, fetched fresh with a strict ~1.5s timeout. If the network is slow or offline, the card renders instantly and just omits the live line. It never hangs.
-- **Interactive menu** (`inquirer`) with quick actions:
+- **Interactive menu** (`inquirer`) that comes back after each action, so you can do several things in one sitting:
   - Copy my email to your clipboard
   - Send me an email (`mailto:`)
   - Open my GitHub / LinkedIn
   - View my resume
   - Save my contact as a `.vcf` (opens in Contacts)
   - Show a scannable contact **QR code**
-  - Quit
+  - Quit (or press Ctrl+C at any time)
 
 The animation, network fetch, and prompt are all skipped automatically when output isn't a TTY (piped, CI, or `--no-prompt`), so it stays fast and never blocks scripts.
+
+## Design
+
+Colours come from [`@brignano/design`](https://github.com/brignano/design), the
+shared design system behind `brignano.io`, and follow its "one hue, one meaning"
+rule: the banner is the monogram and takes the larch-amber **mark**; anything you
+can act on (links, the selected menu row) is **cobalt**; confirmations are
+**forest**, failures are **rust**, and everything else sits on the neutral ramp.
+The hex values live in one place, `src/tokens.ts`, named after the CSS custom
+properties they mirror; the dark set is the default and the light set is picked
+when the terminal advertises a light background via `COLORFGBG`.
+
+Icons fall back to ASCII on consoles whose fonts can't draw them (the legacy
+Windows console, for one), so nothing ever renders as an empty box.
 
 ## CLI
 
@@ -86,7 +100,7 @@ target) and compiles to `dist/` via `tsc`. `npm run dev` runs the TypeScript
 directly through `tsx`; `npm run lint` and `npm run format` use
 [Biome](https://biomejs.dev).
 
-Only `dist/` is published — the tarball is ~8 kB, so `npx brignano` stays a fast
+Only `dist/` is published — the tarball is ~13 kB, so `npx brignano` stays a fast
 cold start.
 
 ## Prerequisites

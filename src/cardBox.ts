@@ -1,64 +1,62 @@
 import boxen from 'boxen';
-import chalk from 'chalk';
 import { profile } from './data.js';
 import type { LiveData } from './live.js';
+import { glyph, ink, link, slate, soft, tokens } from './ui.js';
 
 // Right-aligns labels to a common width so the values line up cleanly.
-const LABEL_WIDTH = 10;
+const LABEL_WIDTH = 8;
 function label(text: string): string {
-  return chalk.white.bold(text.padStart(LABEL_WIDTH) + ':');
+  return slate(text.padStart(LABEL_WIDTH));
+}
+
+function row(name: string, value: string): string {
+  return `${label(name)}  ${value}`;
+}
+
+// A URL where only the handle is emphasised: the scheme and host stay regular,
+// so the eye lands on the part that is actually mine. Cobalt throughout,
+// because the whole thing is clickable.
+function url(prefix: string, handle: string): string {
+  return `${link(prefix)}${link.bold(handle)}`;
 }
 
 interface CardOptions {
   live?: LiveData | null;
-  tagline: string;
 }
 
 // Builds the boxen business card. `live` is optional — when absent the live
 // line is simply omitted, so the card looks intentional with or without network.
-export function renderCard({ live, tagline }: CardOptions): string {
-  // Violet accent matches brignano.io (violet-400 #a78bfa on dark).
-  const accent = chalk.hex('#a78bfa');
+export function renderCard({ live }: CardOptions): string {
   const lines = [
-    accent.bold(profile.fullName) + '  ' + chalk.gray(profile.handle),
+    ink.bold(profile.fullName),
+    `${ink(profile.title)} ${slate('·')} ${ink.bold(profile.org)}`,
     '',
-    `${label('Work')}  ${profile.title} ${chalk.gray('at')} ${chalk
-      .hex('#3A5A78')
-      .bold(profile.org)}`,
-    '',
-    `${label('GitHub')}  ${chalk.gray('https://github.com/')}${chalk.green(
-      profile.username,
-    )}`,
-    `${label('LinkedIn')}  ${chalk.gray('https://linkedin.com/in/')}${chalk.blue(
-      profile.username,
-    )}`,
-    `${label('Website')}  ${chalk.cyan(profile.website)}`,
+    row('GitHub', url('https://github.com/', profile.username)),
+    row('LinkedIn', url('https://linkedin.com/in/', profile.username)),
+    row('Website', link(profile.website)),
+    row('Email', link(profile.email)),
   ];
 
   if (live) {
-    lines.push('');
     const parts = [
-      `${chalk.yellow('★')} ${chalk.bold(live.followers)} followers`,
-      `${chalk.bold(live.publicRepos)} repos`,
+      `${slate(glyph.star)} ${ink.bold(live.followers)} ${soft('followers')}`,
+      `${ink.bold(live.publicRepos)} ${soft('repos')}`,
     ];
     if (live.latestRepo) {
-      parts.push(`latest: ${chalk.green(live.latestRepo.name)}`);
+      parts.push(`${soft('latest')} ${link(live.latestRepo.name)}`);
     }
-    lines.push(`${label('Live')}  ${chalk.gray(parts.join(' · '))}`);
+    lines.push('', row('Stats', parts.join(slate('  ·  '))));
   }
 
-  lines.push(
-    '',
-    `${label('Card')}  ${chalk.red('npx')} ${chalk.white('brignano')}`,
-    '',
-    chalk.italic(tagline),
-  );
+  lines.push('', row('Card', `${slate('$')} ${ink('npx')} ${ink.bold('brignano')}`));
 
   return boxen(lines.join('\n'), {
-    margin: 1,
+    margin: { top: 1, bottom: 1, left: 0, right: 0 },
     float: 'center',
-    padding: 1,
+    padding: { top: 1, bottom: 1, left: 3, right: 3 },
     borderStyle: 'round',
-    borderColor: 'gray',
+    borderColor: tokens.lineStrong,
+    title: soft(profile.handle),
+    titleAlignment: 'center',
   });
 }
