@@ -1,27 +1,54 @@
-// Shared terminal/layout primitives: the brand palette, width-aware centering,
-// tiny colour math for gradients, and cursor hiding during animations. Keeping
-// these in one place is what lets the banner, card, tips and menu line up.
+// Shared terminal/layout primitives: theme-aware styles built on the design
+// tokens, glyphs with legacy-console fallbacks, width-aware centering, tiny
+// colour math for gradients, and cursor hiding during animations.
 
+import figures from '@inquirer/figures';
 import chalk from 'chalk';
 import stringWidth from 'string-width';
+import { dark, light, type Tokens } from './tokens.js';
 
-// Brand palette — matches brignano.io's electric indigo/violet accent.
-export const palette = {
-  // violet-700 → violet-500 → violet-400: the resting banner gradient.
-  brand: ['#6d28d9', '#8b5cf6', '#a78bfa'],
-  // violet-100: the bright crest of the light sweep.
-  crest: '#ede9fe',
-  // violet-950: the unlit "ghost" of letters the sweep hasn't reached yet.
-  ghost: '#2e1065',
-  // violet-400 / violet-300: accents and soft text.
-  accent: '#a78bfa',
-  soft: '#c4b5fd',
-  // violet-500: borders and the menu cursor.
-  border: '#8b5cf6',
+// --- Theme --------------------------------------------------------------------
+
+// Terminals don't expose their theme, but several (iTerm2, Konsole, rxvt, some
+// tmux setups) export COLORFGBG as "<fg>;<bg>" using ANSI palette indexes.
+// Index 7 and 15 are the two whites; everything else we treat as dark.
+export function isLightTerminal(env = process.env): boolean {
+  const spec = env.COLORFGBG;
+  if (!spec) return false;
+  const bg = Number.parseInt(spec.split(';').at(-1) ?? '', 10);
+  return bg === 7 || bg === 15;
+}
+
+export const tokens: Tokens = isLightTerminal() ? light : dark;
+
+// Styles by role, so no module outside tokens.ts ever names a hex.
+export const ink = chalk.hex(tokens.ink);
+export const soft = chalk.hex(tokens.inkSoft);
+export const slate = chalk.hex(tokens.slate);
+export const link = chalk.hex(tokens.link);
+export const success = chalk.hex(tokens.success);
+export const attention = chalk.hex(tokens.attention);
+export const danger = chalk.hex(tokens.danger);
+export const mark = chalk.hex(tokens.mark[1]);
+
+// --- Glyphs -------------------------------------------------------------------
+
+// True when the console can show the box-drawing and symbol glyphs we use.
+// Mirrors the check `figures` makes, read back from its result.
+export const unicode = figures.pointer === '❯';
+
+// `figures` swaps in ASCII on consoles whose fonts lack these (the legacy
+// Windows console in particular), so an icon never renders as an empty box.
+// Its star fallback is still outside those fonts, so that one is ours.
+export const glyph = {
+  pointer: figures.pointer,
+  tick: figures.tick,
+  cross: figures.cross,
+  warning: figures.warning,
+  star: unicode ? figures.star : '*',
 } as const;
 
-export const accent = chalk.hex(palette.accent);
-export const soft = chalk.hex(palette.soft);
+// --- Layout -------------------------------------------------------------------
 
 // Mirrors boxen's fallback order so our centering agrees with its `float: 'center'`.
 export function termWidth(): number {
@@ -76,7 +103,7 @@ export function mix(from: string, to: string, t: number): string {
 // Samples a multi-stop gradient at position `t` in [0, 1].
 export function sample(stops: readonly string[], t: number): string {
   const first = stops[0];
-  if (first === undefined) return '#ffffff';
+  if (first === undefined) return tokens.ink;
   if (stops.length === 1) return first;
   const k = Math.min(1, Math.max(0, t)) * (stops.length - 1);
   const i = Math.min(stops.length - 2, Math.floor(k));

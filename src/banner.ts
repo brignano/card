@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import figlet from 'figlet';
 import { sleep } from './reveal.js';
-import { center, mix, paintGradient, palette, sample, termWidth } from './ui.js';
+import { center, mix, paintGradient, sample, termWidth, tokens } from './ui.js';
 
 type Font = NonNullable<NonNullable<Parameters<typeof figlet.textSync>[1]>['font']>;
 
@@ -41,6 +41,12 @@ interface FrameOptions {
 const BAND = 4; // width of the bright leading edge, in columns
 const GLINT = 3; // half-width of the glint, in columns
 
+// The banner is the monogram: identity, inked with `--mark`. The sweep's crest
+// is the mark pushed most of the way to the page's ink; letters the light hasn't
+// reached yet sit at the strong-border neutral, like an unlit surface.
+const CREST = mix(tokens.mark[2], tokens.ink, 0.75);
+const GHOST = tokens.lineStrong;
+
 // Paints one frame of the art. Pure: same inputs, same string.
 function paintFrame(art: string[], { revealEdge, glintAt }: FrameOptions = {}): string {
   const width = art[0]?.length ?? 1;
@@ -54,15 +60,15 @@ function paintFrame(art: string[], { revealEdge, glintAt }: FrameOptions = {}): 
           out += ch;
           continue;
         }
-        let color = sample(palette.brand, x / last);
+        let color = sample(tokens.mark, x / last);
         if (revealEdge !== undefined) {
           const behind = revealEdge - x; // >0 once the edge has passed this column
-          if (behind <= 0) color = palette.ghost;
-          else if (behind < BAND) color = mix(color, palette.crest, 1 - behind / BAND);
+          if (behind <= 0) color = GHOST;
+          else if (behind < BAND) color = mix(color, CREST, 1 - behind / BAND);
         }
         if (glintAt !== undefined) {
           const dist = Math.abs(x - glintAt);
-          if (dist < GLINT) color = mix(color, palette.crest, 0.85 * (1 - dist / GLINT));
+          if (dist < GLINT) color = mix(color, CREST, 0.85 * (1 - dist / GLINT));
         }
         out += chalk.hex(color)(ch);
       }
@@ -71,7 +77,7 @@ function paintFrame(art: string[], { revealEdge, glintAt }: FrameOptions = {}): 
     .join('\n');
 }
 
-function subtitle(text: string, color: string = palette.soft): string {
+function subtitle(text: string, color: string = tokens.inkSoft): string {
   return chalk.hex(color).italic(text);
 }
 
@@ -79,7 +85,7 @@ function subtitle(text: string, color: string = palette.soft): string {
 export function renderBanner(tagline: string, text = 'brignano'): string {
   const art = bannerArt(text);
   return center(
-    [paintGradient(art.join('\n'), palette.brand), '', subtitle(tagline)].join('\n'),
+    [paintGradient(art.join('\n'), tokens.mark), '', subtitle(tagline)].join('\n'),
   );
 }
 
@@ -135,7 +141,7 @@ export async function animateBanner(tagline: string, text = 'brignano'): Promise
   await sleep(80);
   const fade = [0.25, 0.55, 0.8, 1];
   for (const t of fade) {
-    show(settled, subtitle(tagline, mix(palette.ghost, palette.soft, t)));
+    show(settled, subtitle(tagline, mix(GHOST, tokens.inkSoft, t)));
     await sleep(70);
   }
 }

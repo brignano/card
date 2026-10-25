@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-import chalk from 'chalk';
 import { animateBanner, renderBanner } from './banner.js';
 import { renderCard } from './cardBox.js';
 import { funFacts, liveFact, type NonEmpty, pick, profile, taglines } from './data.js';
@@ -16,7 +15,16 @@ import { fetchLive, type LiveData } from './live.js';
 import { promptForAction, quit, sendEmail, viewResume } from './menu.js';
 import { renderQr } from './qrcode.js';
 import { reveal, sleep } from './reveal.js';
-import { accent, center, soft, withHiddenCursor } from './ui.js';
+import {
+  attention,
+  center,
+  glyph,
+  ink,
+  link,
+  mark,
+  soft,
+  withHiddenCursor,
+} from './ui.js';
 import { writeAndOpenVCard } from './vcard.js';
 
 function printHelp(): void {
@@ -35,7 +43,7 @@ function printHelp(): void {
 
 function farewell(): void {
   console.log(
-    `\n${center(`${accent('✦')} Thanks for stopping by — have a great day!`)}\n`,
+    `\n${center(`${mark(glyph.star)} ${ink('Thanks for stopping by — have a great day!')}`)}\n`,
   );
 }
 
@@ -61,14 +69,16 @@ async function main(): Promise<void> {
   }
   if (flags.view || flags.download) {
     if (flags.download) {
-      console.warn('Note: --download is deprecated; opening the resume instead.');
+      console.warn(
+        `${attention(`${glyph.warning} Note:`)} --download is deprecated; opening the resume instead.`,
+      );
     }
     return viewResume();
   }
   if (flags.email) return sendEmail();
   if (flags.qr) {
     console.log(await renderQr(profile.website));
-    console.log(chalk.gray(`  ${profile.website}\n`));
+    console.log(`  ${link(profile.website)}\n`);
     return;
   }
   if (flags.vcard) return writeAndOpenVCard();
@@ -102,11 +112,9 @@ async function main(): Promise<void> {
   // The "live stats" fact only makes sense when the live line is on the card.
   const facts: NonEmpty<string> = live ? [...funFacts, liveFact] : funFacts;
   console.log(
-    center(
-      `${chalk.gray('Tip:')} ${soft.bold('cmd/ctrl + click')} ${chalk.gray('the links above.')}`,
-    ),
+    center(`${soft('Tip:')} ${ink.bold('cmd/ctrl + click')} ${soft('the links above.')}`),
   );
-  console.log(center(chalk.gray(pick(facts))));
+  console.log(center(soft(pick(facts))));
   console.log();
 
   if (!interactive) return;

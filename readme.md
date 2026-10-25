@@ -17,7 +17,7 @@ npx brignano
 
 ## What it does
 
-- **Animated splash** (`figlet` + `chalk`): a light sweeps across the lettering to reveal the brand gradient, a glint follows, and a tagline fades in beneath. Everything is centered on your terminal, and the banner steps down to a smaller font on narrow windows.
+- **Animated splash** (`figlet` + `chalk`): a light sweeps across the lettering to reveal the larch-amber monogram, a glint follows, and a tagline fades in beneath. Everything is centered on your terminal, and the banner steps down to a smaller font on narrow windows.
 - **Styled business card** (`boxen` + `chalk`) with name, role, links and email, revealed line by line under the banner.
 - **Live GitHub stats** — follower/repo counts and my latest repo, fetched fresh with a strict ~1.5s timeout. If the network is slow or offline, the card renders instantly and just omits the live line. It never hangs.
 - **Interactive menu** (`inquirer`) that comes back after each action, so you can do several things in one sitting:
@@ -30,6 +30,20 @@ npx brignano
   - Quit (or press Ctrl+C at any time)
 
 The animation, network fetch, and prompt are all skipped automatically when output isn't a TTY (piped, CI, or `--no-prompt`), so it stays fast and never blocks scripts.
+
+## Design
+
+Colours come from [`@brignano/design`](https://github.com/brignano/design), the
+shared design system behind `brignano.io`, and follow its "one hue, one meaning"
+rule: the banner is the monogram and takes the larch-amber **mark**; anything you
+can act on (links, the selected menu row) is **cobalt**; confirmations are
+**forest**, failures are **rust**, and everything else sits on the neutral ramp.
+The hex values live in one place, `src/tokens.ts`, named after the CSS custom
+properties they mirror; the dark set is the default and the light set is picked
+when the terminal advertises a light background via `COLORFGBG`.
+
+Icons fall back to ASCII on consoles whose fonts can't draw them (the legacy
+Windows console, for one), so nothing ever renders as an empty box.
 
 ## CLI
 

@@ -1,17 +1,23 @@
 import boxen from 'boxen';
-import chalk from 'chalk';
 import { profile } from './data.js';
 import type { LiveData } from './live.js';
-import { accent, palette, soft } from './ui.js';
+import { glyph, ink, link, slate, soft, tokens } from './ui.js';
 
 // Right-aligns labels to a common width so the values line up cleanly.
 const LABEL_WIDTH = 8;
 function label(text: string): string {
-  return chalk.gray(text.padStart(LABEL_WIDTH));
+  return slate(text.padStart(LABEL_WIDTH));
 }
 
 function row(name: string, value: string): string {
   return `${label(name)}  ${value}`;
+}
+
+// A URL where only the handle is emphasised: the scheme and host stay regular,
+// so the eye lands on the part that is actually mine. Cobalt throughout,
+// because the whole thing is clickable.
+function url(prefix: string, handle: string): string {
+  return `${link(prefix)}${link.bold(handle)}`;
 }
 
 interface CardOptions {
@@ -22,40 +28,34 @@ interface CardOptions {
 // line is simply omitted, so the card looks intentional with or without network.
 export function renderCard({ live }: CardOptions): string {
   const lines = [
-    accent.bold(profile.fullName),
-    `${chalk.white(profile.title)} ${chalk.gray('·')} ${chalk.white.bold(profile.org)}`,
+    ink.bold(profile.fullName),
+    `${ink(profile.title)} ${slate('·')} ${ink.bold(profile.org)}`,
     '',
-    row('GitHub', `${chalk.gray('https://github.com/')}${chalk.white(profile.username)}`),
-    row(
-      'LinkedIn',
-      `${chalk.gray('https://linkedin.com/in/')}${chalk.white(profile.username)}`,
-    ),
-    row('Website', soft(profile.website)),
-    row('Email', soft(profile.email)),
+    row('GitHub', url('https://github.com/', profile.username)),
+    row('LinkedIn', url('https://linkedin.com/in/', profile.username)),
+    row('Website', link(profile.website)),
+    row('Email', link(profile.email)),
   ];
 
   if (live) {
     const parts = [
-      `${chalk.yellow('★')} ${chalk.white.bold(live.followers)} followers`,
-      `${chalk.white.bold(live.publicRepos)} repos`,
+      `${slate(glyph.star)} ${ink.bold(live.followers)} ${soft('followers')}`,
+      `${ink.bold(live.publicRepos)} ${soft('repos')}`,
     ];
     if (live.latestRepo) {
-      parts.push(`latest ${accent(live.latestRepo.name)}`);
+      parts.push(`${soft('latest')} ${link(live.latestRepo.name)}`);
     }
-    lines.push('', row('GitHub', chalk.gray(parts.join('  ·  '))));
+    lines.push('', row('Stats', parts.join(slate('  ·  '))));
   }
 
-  lines.push(
-    '',
-    row('Card', `${chalk.gray('$')} ${chalk.white('npx')} ${accent.bold('brignano')}`),
-  );
+  lines.push('', row('Card', `${slate('$')} ${ink('npx')} ${ink.bold('brignano')}`));
 
   return boxen(lines.join('\n'), {
     margin: { top: 1, bottom: 1, left: 0, right: 0 },
     float: 'center',
     padding: { top: 1, bottom: 1, left: 3, right: 3 },
     borderStyle: 'round',
-    borderColor: palette.border,
+    borderColor: tokens.lineStrong,
     title: soft(profile.handle),
     titleAlignment: 'center',
   });

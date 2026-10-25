@@ -1,47 +1,47 @@
 import { select } from '@inquirer/prompts';
-import chalk from 'chalk';
 import clipboard from 'clipboardy';
 import open from 'open';
 import { profile } from './data.js';
 import { renderQr } from './qrcode.js';
-import { accent } from './ui.js';
+import { danger, glyph, ink, link, soft, success, unicode } from './ui.js';
 import { buildVCard, writeAndOpenVCard } from './vcard.js';
+
+// Every state ships with an icon and a word (design system §3): forest for
+// done, rust for gone wrong.
+const done = (word: string) => success(`${glyph.tick} ${word}`);
+const failed = (word: string) => danger(`${glyph.cross} ${word}`);
 
 // --- Action helpers (kept as named functions so flags and the menu share them) ---
 
 export async function copyEmail(): Promise<void> {
   try {
     await clipboard.write(profile.email);
-    console.log(
-      `\n${chalk.green('✔')} Copied ${accent(profile.email)} to your clipboard.\n`,
-    );
+    console.log(`\n${done('Copied')} ${link(profile.email)} to your clipboard.\n`);
   } catch {
     // Clipboard access fails in headless/SSH environments — degrade gracefully.
-    console.log(`\nMy email is ${accent(profile.email)} — drop me a line!\n`);
+    console.log(`\nMy email is ${link(profile.email)} — drop me a line!\n`);
   }
 }
 
 export async function sendEmail(): Promise<void> {
   try {
     await open(`mailto:${profile.email}`);
-    console.log(
-      `\n${chalk.green('✔')} Opened your mail client — see you in the inbox.\n`,
-    );
+    console.log(`\n${done('Opened')} your mail client — see you in the inbox.\n`);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error(`Failed to open mail client: ${message}`);
-    console.error(`Reach me directly at ${profile.email}`);
+    console.error(`\n${failed('Failed')} to open your mail client: ${message}`);
+    console.error(`Reach me directly at ${link(profile.email)}\n`);
   }
 }
 
 export async function openUrl(url: string, label: string): Promise<void> {
   try {
     await open(url);
-    console.log(`\n${chalk.green('✔')} Opened ${label}: ${chalk.gray(url)}\n`);
+    console.log(`\n${done('Opened')} ${label}: ${link(url)}\n`);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error(`Failed to open ${label}: ${message}`);
-    console.error(`Here it is: ${url}`);
+    console.error(`\n${failed('Failed')} to open ${label}: ${message}`);
+    console.error(`Here it is: ${link(url)}\n`);
   }
 }
 
@@ -51,7 +51,7 @@ export async function viewResume(): Promise<void> {
 
 export async function showContactQr(): Promise<void> {
   const qr = await renderQr(buildVCard());
-  console.log(`\nScan to save my contact:\n`);
+  console.log('\nScan to save my contact:\n');
   console.log(qr);
 }
 
@@ -125,13 +125,28 @@ export async function promptForAction(message: string): Promise<MenuAction> {
     // Default page size is 7, which would hide the last entry behind a scroll.
     // Show every action at once — the list is short and fixed.
     pageSize: choices.length,
+    // Cobalt is the "you can act on this" hue; the selected row and the final
+    // answer wear it. The done prefix is forest, like every other confirmation.
+    // The cursor icon is left to inquirer, which already falls back to ASCII on
+    // consoles that can't draw it.
     theme: {
-      prefix: { idle: accent('❯'), done: accent('✔') },
-      icon: { cursor: '❯' },
+      prefix: { idle: link(glyph.pointer), done: success(glyph.tick) },
       style: {
-        highlight: (text: string) => accent.bold(text),
-        answer: (text: string) => accent(text),
-        description: (text: string) => chalk.gray(`  ${text}`),
+        message: (text: string) => ink.bold(text),
+        highlight: (text: string) => link.bold(text),
+        answer: (text: string) => link(text),
+        description: (text: string) => soft(`  ${text}`),
+        // inquirer hardcodes ↑↓ and ⏎ here; spell them out where the console
+        // can't draw them.
+        keysHelpTip: (keys: [string, string][]) =>
+          keys
+            .map(([key, action]) => {
+              const shown = unicode
+                ? key
+                : key.replace('↑↓', 'up/down').replace('⏎', 'enter');
+              return `${ink.bold(shown)} ${soft(action)}`;
+            })
+            .join(soft(' • ')),
       },
     },
   });
