@@ -1,4 +1,8 @@
-# Publishes to npm when a GitHub release is published.
+# Publishes to npm when a GitHub release is published, or when release.yml
+# dispatches it. A release created by release.yml uses the workflow
+# GITHUB_TOKEN, which does not fire `release` events, so release.yml runs this
+# workflow directly with `tag` and `prerelease` inputs. Do not rename this
+# file: the npm trusted publisher is configured for it by name.
 #
 # Authentication is npm trusted publishing (OIDC) — there is deliberately no
 # NPM_TOKEN. The registry verifies a short-lived, workflow-scoped OIDC token
@@ -12,6 +16,16 @@ name: Publish Package
 
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to publish, like v1.2.3
+        required: true
+        type: string
+      prerelease:
+        description: Publish to the `next` dist-tag
+        required: false
+        default: false
+        type: boolean
   release:
     # `created` never fires for draft releases, and does not fire when a release
     # is published from a previously-saved draft — so the usual "save a draft,
@@ -30,6 +44,8 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag }}
       - name: Use Node.js
         uses: actions/setup-node@v6
         with:
@@ -40,6 +56,29 @@ jobs:
         run: |
           npm install -g npm@latest
           npm --version
+      # A tag that disagrees with package.json publishes a version nobody can
+      # find by tag, and npm versions are immutable, so catch it here.
+      #
+      # A dispatch from release.yml has no version-bump commit: the tag is the
+      # source of truth and package.json is rewritten in the runner (the
+      # runtime `--version` reads package.json, so it reports the tag too).
+      # A release published from the UI must still match package.json.
+      - name: Tag matches package.json version
+        env:
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+          DISPATCHED: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          tag="${TAG#v}"
+          [[ "$tag" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]] || { echo "::error::'$TAG' is not a version like v1.2.3"; exit 1; }
+          if [ "$DISPATCHED" = "true" ]; then
+            npm version "$tag" --no-git-tag-version --allow-same-version
+          fi
+          pkg="$(node -p "require('./package.json').version")"
+          if [ "$tag" != "$pkg" ]; then
+            echo "::error::tag v${tag} does not match package.json version ${pkg}"
+            exit 1
+          fi
+          echo "publishing ${pkg}"
       - name: Install & Build
         run: |
           npm ci
@@ -53,7 +92,10 @@ jobs:
       - name: Publish to npm
         # No NODE_AUTH_TOKEN: auth comes from the OIDC token minted above.
         #
-        # `published` also fires for pre-releases, so ship those under the
-        # `next` dist-tag — otherwise a pre-release would become the version
-        # `npx brignano` resolves to. Manual runs publish to `latest`.
-        run: npm publish ${{ github.event.release.prerelease && '--tag next' || '' }}
+        # Pre-releases ship under the `next` dist-tag — otherwise a pre-release
+        # would become the version `npx brignano` resolves to. A UI release
+        # carries the flag on the event; a dispatched run gets it as an input.
+        env:
+          PRERELEASE: ${{ github.event.release.prerelease || inputs.prerelease }}
+        run: |
+          if [ "$PRERELEASE" = "true" ]; then npm publish --tag next; else npm publish; fi

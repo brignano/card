@@ -1,0 +1,73 @@
+# Cuts a release: tags main, creates the GitHub release from
+# releases/v<version>.md, then dispatches publish.yml.
+#
+# Run it from the Actions tab (or `gh workflow run release.yml -f version=1.2.3`)
+# only when the notes are merged to main and Anthony has said "publish X" for
+# that exact version. A published npm version can never be reused.
+#
+# Why publish is dispatched rather than relying on its `release` trigger:
+# events caused by the workflow GITHUB_TOKEN do not start other workflows, so
+# a release created here would never publish. Dispatching publish.yml directly
+# also keeps the npm trusted publisher pointing at that file, unchanged (npm
+# trusted publishing checks the workflow filename).
+#
+# There is no version-bump commit: the tag is the version, and the dispatched
+# publish rewrites package.json from it in the runner.
+#
+# Standard: brignano/ai-tools skills/releases/SKILL.md ("Workflow release").
+
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to release, like 1.2.3 or 1.3.0-rc.1 (no leading v)
+        required: true
+        type: string
+      prerelease:
+        description: Mark as pre-release (publishes to the `next` npm tag)
+        required: false
+        default: false
+        type: boolean
+
+concurrency: release
+
+env:
+  PUBLISH_WORKFLOW: publish.yml
+  NPM_PACKAGE: brignano
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      VERSION: ${{ inputs.version }}
+      PRERELEASE: ${{ inputs.prerelease }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+      - name: Check the version and notes
+        run: |
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]] || { echo "::error::'$VERSION' is not a version like 1.2.3"; exit 1; }
+          [[ -s "releases/v$VERSION.md" ]] || { echo "::error::releases/v$VERSION.md is missing or empty on main"; exit 1; }
+          if gh release view "v$VERSION" >/dev/null 2>&1 || git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" >/dev/null 2>&1; then
+            echo "::error::v$VERSION already exists"; exit 1
+          fi
+          if [[ -n "$NPM_PACKAGE" ]] && npm view "$NPM_PACKAGE@$VERSION" version >/dev/null 2>&1; then
+            echo "::error::$VERSION is already on npm"; exit 1
+          fi
+      - name: Create the release
+        run: |
+          flags=()
+          [[ "$PRERELEASE" == "true" ]] && flags+=(--prerelease)
+          gh release create "v$VERSION" --target "$(git rev-parse HEAD)" --title "v$VERSION" \
+            --notes-file "releases/v$VERSION.md" "${flags[@]}"
+      - name: Publish
+        run: |
+          gh workflow run "$PUBLISH_WORKFLOW" --ref "v$VERSION" -f tag="v$VERSION" -f prerelease="$PRERELEASE"
+          echo "Release v$VERSION created; $PUBLISH_WORKFLOW dispatched. Watch its run." >> "$GITHUB_STEP_SUMMARY"
