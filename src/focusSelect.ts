@@ -121,3 +121,7 @@ const prompt = createPrompt<unknown, FocusSelectConfig<unknown>>((config, done) 
 export function focusSelect<T>(config: FocusSelectConfig<T>): Promise<T> {
   return prompt(config as FocusSelectConfig<unknown>) as Promise<T>;
 }
+
+// The raw prompt, for `@inquirer/testing`: its `render` needs a prompt that
+// takes inquirer's context argument, which the wrapper above doesn't pass on.
+export { prompt as focusSelectPrompt };
