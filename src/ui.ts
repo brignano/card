@@ -31,6 +31,18 @@ export const attention = chalk.hex(tokens.attention);
 export const danger = chalk.hex(tokens.danger);
 export const mark = chalk.hex(tokens.mark[1]);
 
+// Emphasis falls off from the live menu row through the cobalt ladder and lands
+// on the neutral: the row itself at --i-pressed, one away at --i-hover, two away
+// at --i-ink, everything beyond that at --n-700. One hue throughout — only the
+// lightness moves — so the menu stays entirely inside the affordance layer and
+// nothing but cobalt ever says "you can act on this".
+const FOCUS_RAMP = [tokens.linkPressed, tokens.linkHover, tokens.link] as const;
+
+// `distance` is rows between this row and the cursor; the sign doesn't matter.
+export function focusInk(distance: number): string {
+  return FOCUS_RAMP[Math.abs(distance)] ?? tokens.inkSoft;
+}
+
 // --- Glyphs -------------------------------------------------------------------
 
 // Three tiers, because "can this console draw Unicode" is not a yes/no. The

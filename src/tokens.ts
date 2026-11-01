@@ -22,14 +22,27 @@ export interface Tokens {
   lineStrong: string;
   /** --i-ink: links, selection, anything actionable. Cobalt, OKLCH hue 256°. */
   link: string;
+  /**
+   * --i-hover / --i-pressed: the rest of the cobalt ladder. One hue, three
+   * lightnesses, so the menu can show emphasis falling off from the live row
+   * without reaching for a second colour. Note the ladder inverts between
+   * themes — in dark it climbs toward white, in light it darkens — so
+   * `pressed` is always the most emphatic step, never the lightest.
+   */
+  linkHover: string;
+  linkPressed: string;
   /** --success-ink. */
   success: string;
   /** --attention-ink. */
   attention: string;
   /** --danger-ink. */
   danger: string;
-  /** --mark: identity, graphic only. The banner's gradient runs through these. */
-  mark: readonly [string, string, string];
+  /**
+   * --mark: identity, graphic only. The banner's gradient runs through these,
+   * left to right. Two stops or more; the last one is the brightest, and the
+   * sweep's crest is mixed from it.
+   */
+  mark: readonly [string, string, ...string[]];
 }
 
 // Dark theme (`:root:not([data-theme='light'])`). The default — most terminals
@@ -40,13 +53,18 @@ export const dark: Tokens = {
   slate: '#8b8b93',
   lineStrong: '#3a3a41',
   link: '#6ba5f3',
+  linkHover: '#98c4ff',
+  linkPressed: '#c0dbff',
   success: '#8fd4ae',
   attention: '#e0a44f',
   danger: '#ec9880',
-  // --mark (light) → --mark → --larch-deep (dark): deep larch to bright larch.
-  // The light step is borrowed on purpose — in dark, --mark and --mark-ink
-  // converge, so a gradient between them would be flat.
-  mark: ['#b4741f', '#e0a44f', '#f0bd74'],
+  // --mark (light) → --mark (dark). The light step is borrowed on purpose:
+  // in dark, --mark and --mark-ink converge, so a gradient between them would
+  // be flat. --larch-deep (#f0bd74) used to sit on the end; dropping it takes
+  // the splash's mean luminance down ~21% and its contrast span from
+  // 5.05–11.31:1 to 5.05–8.87:1, so the monogram stops climbing into pale
+  // yellow at the right edge. Identity, not volume, is the job here.
+  mark: ['#b4741f', '#e0a44f'],
 };
 
 // Light theme (`:root`). Picked only when the terminal advertises a light
@@ -57,6 +75,8 @@ export const light: Tokens = {
   slate: '#6b6b73',
   lineStrong: '#cbcbce',
   link: '#0159b5',
+  linkHover: '#014a97',
+  linkPressed: '#003e82',
   success: '#245740',
   attention: '#8a5714',
   danger: '#8a3722',
