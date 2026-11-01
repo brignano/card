@@ -1,9 +1,9 @@
-import { select } from '@inquirer/prompts';
 import clipboard from 'clipboardy';
 import open from 'open';
 import { profile } from './data.js';
+import { focusSelect } from './focusSelect.js';
 import { renderQr } from './qrcode.js';
-import { danger, glyph, ink, link, soft, success } from './ui.js';
+import { danger, glyph, link, success } from './ui.js';
 import { buildVCard, writeAndOpenVCard } from './vcard.js';
 
 // Every state ships with an icon and a word (design system §3): forest for
@@ -68,8 +68,8 @@ export interface MenuChoice {
   value: MenuAction;
 }
 
-// Names stay unstyled on purpose: the active row is highlighted as a whole, and
-// embedded colour resets would break that highlight mid-line.
+// Names stay unstyled here: `focusSelect` paints each row by its distance from
+// the cursor, and an embedded colour reset would cut that paint mid-line.
 export function buildChoices(): MenuChoice[] {
   return [
     {
@@ -117,33 +117,11 @@ export function buildChoices(): MenuChoice[] {
 
 // Shows the action menu and returns the chosen handler. Ctrl+C / Esc throws an
 // `ExitPromptError`, which the entry point treats as a normal exit.
+// Cobalt is the "you can act on this" hue, so the whole menu lives in it: the
+// live row at --i-pressed, its neighbours stepping down --i-hover and --i-ink,
+// the rest on the neutral. Moving the cursor moves the emphasis with it, and
+// because only the lightness changes, no second hue is ever introduced — the
+// identity amber stays on the banner, where DESIGN.md §3 keeps it.
 export async function promptForAction(message: string): Promise<MenuAction> {
-  const choices = buildChoices();
-  return select<MenuAction>({
-    message,
-    choices,
-    // Default page size is 7, which would hide the last entry behind a scroll.
-    // Show every action at once — the list is short and fixed.
-    pageSize: choices.length,
-    // Cobalt is the "you can act on this" hue; the selected row and the final
-    // answer wear it. The done prefix is forest, like every other confirmation.
-    theme: {
-      prefix: { idle: link(glyph.pointer), done: success(glyph.tick) },
-      icon: { cursor: glyph.pointer },
-      style: {
-        message: (text: string) => ink.bold(text),
-        highlight: (text: string) => link.bold(text),
-        answer: (text: string) => link(text),
-        description: (text: string) => soft(`  ${text}`),
-        // inquirer hardcodes ↑↓ and ⏎ here; swap in whatever this console can draw.
-        keysHelpTip: (keys: [string, string][]) =>
-          keys
-            .map(([key, action]) => {
-              const shown = key.replace('↑↓', glyph.arrows).replace('⏎', glyph.enter);
-              return `${ink.bold(shown)} ${soft(action)}`;
-            })
-            .join(soft(' • ')),
-      },
-    },
-  });
+  return focusSelect<MenuAction>({ message, choices: buildChoices() });
 }

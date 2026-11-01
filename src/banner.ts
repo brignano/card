@@ -44,7 +44,7 @@ const GLINT = 3; // half-width of the glint, in columns
 // The banner is the monogram: identity, inked with `--mark`. The sweep's crest
 // is the mark pushed most of the way to the page's ink; letters the light hasn't
 // reached yet sit at the strong-border neutral, like an unlit surface.
-const CREST = mix(tokens.mark[2], tokens.ink, 0.75);
+const CREST = mix(tokens.mark.at(-1) ?? tokens.mark[1], tokens.ink, 0.75);
 const GHOST = tokens.lineStrong;
 
 // Paints one frame of the art. Pure: same inputs, same string.

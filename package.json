@@ -44,8 +44,8 @@
     "provenance": true
   },
   "dependencies": {
+    "@inquirer/core": "^12.0.0",
     "@inquirer/figures": "^2.0.9",
-    "@inquirer/prompts": "^8.6.0",
     "boxen": "^8.0.1",
     "chalk": "^6.0.0",
     "clipboardy": "^5.3.2",
