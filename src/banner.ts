@@ -1,30 +1,22 @@
 import chalk from 'chalk';
-import figlet from 'figlet';
+import { bannerArt, bannerText } from './bannerArt.js';
 import { sleep } from './reveal.js';
 import { center, mix, paintGradient, sample, termWidth, tokens } from './ui.js';
 
-type Font = NonNullable<NonNullable<Parameters<typeof figlet.textSync>[1]>['font']>;
-
 // Fonts in order of preference, with the terminal width each one needs. The
 // widest that fits wins; on a very narrow terminal we fall back to plain text so
-// nothing ever wraps mid-letter.
-const FONTS: ReadonlyArray<{ font: Font; minColumns: number }> = [
+// nothing ever wraps mid-letter. The lettering itself is pre-rendered into
+// bannerArt.ts (`npm run gen:banner`), so figlet never ships.
+const FONTS: ReadonlyArray<{ font: keyof typeof bannerArt; minColumns: number }> = [
   { font: 'ANSI Shadow', minColumns: 72 },
   { font: 'Small', minColumns: 44 },
 ];
 
-// Figlet output as a clean rectangle: trailing blank lines dropped, every line
+// The lettering as a clean rectangle: trailing blank lines dropped, every line
 // padded to the same width so per-column effects line up.
-function bannerArt(text: string, columns = termWidth()): string[] {
+function bannerLines(columns = termWidth()): string[] {
   const choice = FONTS.find((f) => columns >= f.minColumns);
-  let lines: string[];
-  try {
-    lines = choice
-      ? figlet.textSync(text, { font: choice.font }).split('\n')
-      : [text.toUpperCase()];
-  } catch {
-    lines = [text.toUpperCase()];
-  }
+  const lines: string[] = choice ? [...bannerArt[choice.font]] : [bannerText.toUpperCase()];
   while (lines.length > 0 && (lines.at(-1) ?? '').trim() === '') lines.pop();
   const width = Math.max(...lines.map((l) => l.length), 1);
   return lines.map((l) => l.padEnd(width));
@@ -82,8 +74,8 @@ function subtitle(text: string, color: string = tokens.inkSoft): string {
 }
 
 // Static, centered banner with the tagline beneath (non-animated path).
-export function renderBanner(tagline: string, text = 'brignano'): string {
-  const art = bannerArt(text);
+export function renderBanner(tagline: string): string {
+  const art = bannerLines();
   return center(
     [paintGradient(art.join('\n'), tokens.mark), '', subtitle(tagline)].join('\n'),
   );
@@ -101,9 +93,9 @@ function draw(lines: string[], redraw: boolean): void {
 // revealing the brand gradient behind it, a quick glint follows, and the tagline
 // fades in underneath. Redraws in place via ANSI cursor moves, so it must only
 // be called on a TTY (the caller gates this behind `shouldAnimate`).
-export async function animateBanner(tagline: string, text = 'brignano'): Promise<void> {
+export async function animateBanner(tagline: string): Promise<void> {
   const columns = termWidth();
-  const art = bannerArt(text, columns);
+  const art = bannerLines(columns);
   const width = art[0]?.length ?? 1;
   const pad = ' '.repeat(Math.max(0, Math.floor((columns - width) / 2)));
   const frame = (body: string, sub = ''): string[] => [

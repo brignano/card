@@ -1,5 +1,3 @@
-import clipboard from 'clipboardy';
-import open from 'open';
 import { profile } from './data.js';
 import { focusSelect } from './focusSelect.js';
 import { renderQr } from './qrcode.js';
@@ -12,9 +10,13 @@ const done = (word: string) => success(`${glyph.tick} ${word}`);
 const failed = (word: string) => danger(`${glyph.cross} ${word}`);
 
 // --- Action helpers (kept as named functions so flags and the menu share them) ---
+//
+// `clipboardy` and `open` are imported inside the actions that need them, so
+// showing the card never pays to load them.
 
 export async function copyEmail(): Promise<void> {
   try {
+    const { default: clipboard } = await import('clipboardy');
     await clipboard.write(profile.email);
     console.log(`\n${done('Copied')} ${link(profile.email)} to your clipboard.\n`);
   } catch {
@@ -25,6 +27,7 @@ export async function copyEmail(): Promise<void> {
 
 export async function sendEmail(): Promise<void> {
   try {
+    const { default: open } = await import('open');
     await open(`mailto:${profile.email}`);
     console.log(`\n${done('Opened')} your mail client — see you in the inbox.\n`);
   } catch (err) {
@@ -36,6 +39,7 @@ export async function sendEmail(): Promise<void> {
 
 export async function openUrl(url: string, label: string): Promise<void> {
   try {
+    const { default: open } = await import('open');
     await open(url);
     console.log(`\n${done('Opened')} ${label}: ${link(url)}\n`);
   } catch (err) {

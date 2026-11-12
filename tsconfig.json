@@ -5,11 +5,9 @@
     "moduleResolution": "NodeNext",
     "lib": ["ES2022"],
     "types": ["node"],
-    "outDir": "dist",
-    "rootDir": "src",
+    "noEmit": true,
     "strict": true,
     "noUncheckedIndexedAccess": true,
-    "declaration": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
