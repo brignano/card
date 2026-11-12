@@ -39,33 +39,94 @@ export function isLightBackground(rgb: Rgb): boolean {
   return luminance(rgb) > 0.5;
 }
 
+// The parts of a terminal this needs; `process.stdin`/`process.stdout` in real
+// use, fakes in tests.
+export interface TerminalIo {
+  stdin: {
+    isTTY?: boolean;
+    isRaw?: boolean;
+    setRawMode(mode: boolean): unknown;
+    on(event: 'data', listener: (chunk: Buffer) => void): unknown;
+    removeListener(event: 'data', listener: (chunk: Buffer) => void): unknown;
+    resume(): unknown;
+    pause(): unknown;
+  };
+  stdout: { isTTY?: boolean; write(text: string): unknown };
+  env: NodeJS.ProcessEnv;
+}
+
+interface QueryOptions {
+  // How long the caller waits for an answer before falling back.
+  timeoutMs?: number;
+  // How long a late answer is still swallowed after that.
+  drainMs?: number;
+  io?: TerminalIo;
+}
+
+const CTRL_C = '\u0003';
+
+let settled: Promise<void> = Promise.resolve();
+
+// Resolves once the last query has let go of stdin. Await it before handing
+// stdin to anything else (the menu prompt), so a reply still in flight is
+// swallowed here instead of being read as keypresses there.
+export function backgroundQuerySettled(): Promise<void> {
+  return settled;
+}
+
 // Resolves to the terminal's background colour, or null when it can't be asked
-// (not a TTY, CI) or doesn't answer within `timeoutMs`. Never throws, and always
-// puts stdin back the way it found it.
-export function queryBackground(timeoutMs = 100): Promise<Rgb | null> {
-  const { stdin, stdout } = process;
-  if (!stdin.isTTY || !stdout.isTTY || process.env.CI) return Promise.resolve(null);
+// (not a TTY, CI) or doesn't answer within `timeoutMs`. Never throws.
+//
+// A slow terminal (SSH, a busy multiplexer) can answer after the timeout. If
+// stdin went back to normal at that point, the late reply would be echoed onto
+// the screen and typed into the next prompt. So the caller gets its answer at
+// the timeout, but stdin stays raw and listening until the device-attributes
+// reply arrives or `drainMs` passes, and only then is put back as it was found.
+export function queryBackground({
+  timeoutMs = 100,
+  drainMs = 1000,
+  io = process,
+}: QueryOptions = {}): Promise<Rgb | null> {
+  const { stdin, stdout, env } = io;
+  if (!stdin.isTTY || !stdout.isTTY || env.CI) return Promise.resolve(null);
 
   return new Promise((resolve) => {
     let reply = '';
-    const wasRaw = stdin.isRaw;
+    let release: () => void = () => {};
+    settled = new Promise((done) => {
+      release = done;
+    });
+    const wasRaw = Boolean(stdin.isRaw);
 
-    const finish = (result: Rgb | null): void => {
-      clearTimeout(timer);
+    const answer = (): void => {
+      clearTimeout(answerTimer);
+      resolve(parseBackground(reply));
+    };
+
+    const letGo = (): void => {
+      clearTimeout(drainTimer);
       stdin.removeListener('data', onData);
       stdin.setRawMode(wasRaw);
       stdin.pause();
-      resolve(result);
+      answer();
+      release();
     };
 
     const onData = (chunk: Buffer): void => {
-      reply += chunk.toString('latin1');
-      // Wait for the device-attributes reply either way: it is the last thing
-      // the terminal will send, so nothing is left unread when we stop.
-      if (DEVICE_ATTRIBUTES_REPLY.test(reply)) finish(parseBackground(reply));
+      const text = chunk.toString('latin1');
+      // Raw mode swallows Ctrl+C; give it back rather than ignore the user.
+      if (text.includes(CTRL_C)) {
+        letGo();
+        process.kill(process.pid, 'SIGINT');
+        return;
+      }
+      reply += text;
+      // The device-attributes reply is the last thing the terminal will send.
+      if (DEVICE_ATTRIBUTES_REPLY.test(reply)) letGo();
     };
 
-    const timer = setTimeout(() => finish(parseBackground(reply)), timeoutMs);
+    const answerTimer = setTimeout(answer, timeoutMs);
+    const drainTimer = setTimeout(letGo, timeoutMs + drainMs);
 
     try {
       // Raw mode: the reply must reach us unechoed and without waiting for Enter.
@@ -74,7 +135,7 @@ export function queryBackground(timeoutMs = 100): Promise<Rgb | null> {
       stdin.resume();
       stdout.write(QUERY);
     } catch {
-      finish(null);
+      letGo();
     }
   });
 }

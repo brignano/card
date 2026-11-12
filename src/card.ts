@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 
-import { isLightBackground, queryBackground } from './background.ts';
+import {
+  backgroundQuerySettled,
+  isLightBackground,
+  queryBackground,
+} from './background.ts';
 import { animateBanner, renderBanner } from './banner.ts';
 import { renderCard } from './cardBox.ts';
 import { funFacts, liveFact, type NonEmpty, pick, profile, taglines } from './data.ts';
@@ -126,6 +130,10 @@ async function main(): Promise<void> {
   console.log();
 
   if (!interactive) return;
+
+  // A terminal that answered the background query late may still be sending;
+  // let that finish before the menu starts reading keys.
+  await backgroundQuerySettled();
 
   // The menu comes back after every action, so visitors can copy an email, open
   // a link and grab the QR in one sitting. "Quit" (or Ctrl+C) ends it.

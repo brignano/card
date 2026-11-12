@@ -1,10 +1,13 @@
 import assert from 'node:assert/strict';
+import { EventEmitter } from 'node:events';
 import { test } from 'node:test';
 import {
+  backgroundQuerySettled,
   isLightBackground,
   luminance,
   parseBackground,
   queryBackground,
+  type TerminalIo,
 } from '../src/background.ts';
 
 const ESC = '\u001b';
@@ -52,9 +55,93 @@ test('light means relative luminance above 0.5', () => {
   assert.equal(isLightBackground(hex('808080')), false, 'mid grey reads as dark');
 });
 
-test('nothing is asked when stdin is not a terminal', async () => {
-  // `node --test` runs with piped stdio, so this must resolve at once.
+// A terminal that answers `reply` after `afterMs`, recording what is done to it.
+function fakeTerminal(reply: string | null, afterMs = 0) {
+  const emitter = new EventEmitter();
+  const state = { raw: false, paused: true, asked: '', rawHistory: [] as boolean[] };
+  const io: TerminalIo = {
+    env: {},
+    stdout: {
+      isTTY: true,
+      write(text: string) {
+        state.asked += text;
+        if (reply !== null) {
+          setTimeout(() => emitter.emit('data', Buffer.from(reply, 'latin1')), afterMs);
+        }
+      },
+    },
+    stdin: {
+      isTTY: true,
+      get isRaw() {
+        return state.raw;
+      },
+      setRawMode(mode: boolean) {
+        state.raw = mode;
+        state.rawHistory.push(mode);
+      },
+      on: (event, listener) => emitter.on(event, listener),
+      removeListener: (event, listener) => emitter.removeListener(event, listener),
+      resume() {
+        state.paused = false;
+      },
+      pause() {
+        state.paused = true;
+      },
+    },
+  };
+  return { io, state, listeners: () => emitter.listenerCount('data') };
+}
+
+const WHITE = `${ESC}]11;rgb:ffff/ffff/ffff\u0007`;
+const ATTRIBUTES = `${ESC}[?62;22c`;
+
+test('a prompt answer is used, and stdin is put back as it was', async () => {
+  const term = fakeTerminal(WHITE + ATTRIBUTES);
+  assert.deepEqual(await queryBackground({ io: term.io }), [1, 1, 1]);
+  await backgroundQuerySettled();
+  assert.match(term.state.asked, /\]11;\?/);
+  assert.deepEqual(term.state.rawHistory, [true, false]);
+  assert.equal(term.state.paused, true);
+  assert.equal(term.listeners(), 0);
+});
+
+test('a terminal without OSC 11 is known from its attributes reply, without waiting', async () => {
+  const term = fakeTerminal(ATTRIBUTES);
   const started = Date.now();
-  assert.equal(await queryBackground(5000), null);
+  assert.equal(await queryBackground({ io: term.io, timeoutMs: 5000 }), null);
   assert.ok(Date.now() - started < 1000);
+});
+
+test('a reply after the timeout is swallowed, not left to be echoed', async () => {
+  const term = fakeTerminal(WHITE + ATTRIBUTES, 120);
+  // The caller falls back at the timeout…
+  assert.equal(await queryBackground({ io: term.io, timeoutMs: 30 }), null);
+  // …but stdin is still raw and listening, so the late reply cannot echo.
+  assert.equal(term.state.raw, true);
+  assert.equal(term.listeners(), 1);
+  await backgroundQuerySettled();
+  assert.deepEqual(term.state.rawHistory, [true, false]);
+  assert.equal(term.state.paused, true);
+  assert.equal(term.listeners(), 0);
+});
+
+test('a terminal that never answers is let go after the drain window', async () => {
+  const term = fakeTerminal(null);
+  assert.equal(await queryBackground({ io: term.io, timeoutMs: 20, drainMs: 40 }), null);
+  assert.equal(term.state.raw, true);
+  await backgroundQuerySettled();
+  assert.equal(term.state.raw, false);
+  assert.equal(term.listeners(), 0);
+});
+
+test('nothing is asked when stdin is not a terminal, or in CI', async () => {
+  // `node --test` runs with piped stdio, so the default must resolve at once.
+  const started = Date.now();
+  assert.equal(await queryBackground({ timeoutMs: 5000 }), null);
+  assert.ok(Date.now() - started < 1000);
+
+  const term = fakeTerminal(WHITE + ATTRIBUTES);
+  term.io.env = { CI: 'true' };
+  assert.equal(await queryBackground({ io: term.io }), null);
+  assert.equal(term.state.asked, '');
 });
