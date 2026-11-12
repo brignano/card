@@ -40,10 +40,12 @@ export interface FocusSelectConfig<T> {
 // `@inquirer/select`.
 const SEARCH_RESET_MS = 700;
 
-const helpLine = [
-  `${ink.bold(glyph.arrows)} ${soft('navigate')}`,
-  `${ink.bold(glyph.enter)} ${soft('select')}`,
-].join(soft(' • '));
+// Built per render, not at import: the theme is settled at startup.
+const helpLine = (): string =>
+  [
+    `${ink.bold(glyph.arrows)} ${soft('navigate')}`,
+    `${ink.bold(glyph.enter)} ${soft('select')}`,
+  ].join(soft(' • '));
 
 const prompt = createPrompt<unknown, FocusSelectConfig<unknown>>((config, done) => {
   const [status, setStatus] = useState<'idle' | 'done'>('idle');
@@ -110,7 +112,7 @@ const prompt = createPrompt<unknown, FocusSelectConfig<unknown>>((config, done) 
     ...rows,
     ' ',
     current.description ? soft(`  ${current.description}`) : '',
-    helpLine,
+    helpLine(),
   ]
     .filter(Boolean)
     .join('\n');

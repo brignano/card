@@ -39,8 +39,10 @@ rule: the banner is the monogram and takes the larch-amber **mark**; anything yo
 can act on (links, the selected menu row) is **cobalt**; confirmations are
 **forest**, failures are **rust**, and everything else sits on the neutral ramp.
 The hex values live in one place, `src/tokens.ts`, named after the CSS custom
-properties they mirror; the dark set is the default and the light set is picked
-when the terminal advertises a light background via `COLORFGBG`.
+properties they mirror; at startup the card asks the terminal for its
+background colour (OSC 11) and picks the light set when it is light. A terminal
+that doesn't answer within 100 ms falls back to `COLORFGBG`, then to the dark
+set; piped output and CI are never asked.
 
 Icons come in three tiers so nothing ever renders as an empty box: full Unicode
 where the terminal supports it; a set drawn from the blocks the legacy Windows
