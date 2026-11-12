@@ -103,12 +103,24 @@ workflow renders it on a Linux runner and pushes the new file back, so VHS
 doesn't need to be installed locally.
 
 Source lives in `src/` (split into small modules — `card.ts` is the entry/`bin`
-target) and compiles to `dist/` via `tsc`. `npm run dev` runs the TypeScript
-directly through `tsx`; `npm run lint` and `npm run format` use
-[Biome](https://biomejs.dev).
+target). `npm run build` type-checks with `tsc`, then bundles with
+[esbuild](https://esbuild.github.io) into `dist/` (`scripts/build.mjs`).
+`npm run dev` runs the TypeScript directly through `tsx`; `npm run lint` and
+`npm run format` use [Biome](https://biomejs.dev).
 
-Only `dist/` is published — the tarball is ~13 kB, so `npx brignano` stays a fast
-cold start.
+The published package has **no runtime dependencies**: everything is bundled, so
+`npx brignano` downloads one small tarball instead of installing a dependency
+tree. Three things keep it that way:
+
+- The banner lettering is rendered once by `figlet` into `src/bannerArt.ts`
+  (`npm run gen:banner`) and committed, so `figlet` and its fonts never ship. A
+  test fails if that file drifts from what `figlet` produces.
+- The clipboard, browser-opener and QR libraries are split into their own chunks
+  and only read when an action needs them.
+- `test/pack.test.ts` packs the tarball, unpacks it with no `node_modules` in
+  reach, and runs it, so a missing import can't reach npm.
+
+The licences of the bundled packages ship in `dist/THIRD-PARTY-LICENSES.txt`.
 
 ## Prerequisites
 

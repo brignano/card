@@ -2,6 +2,14 @@
 
 Before every commit: `npm run lint` and `npm run build && npm test`.
 
+## Build
+
+`npm run build` type-checks with `tsc` and bundles with esbuild
+(`scripts/build.mjs`) into `dist/`. The published package has no runtime
+dependencies, so every package goes in `devDependencies`; a `dependencies`
+entry fails `test/pack.test.ts`. The banner lettering in `src/bannerArt.ts` is
+generated: after changing the word or the fonts, run `npm run gen:banner`.
+
 ## How to release
 
 Only when Anthony says "publish X" explicitly, for that exact version.

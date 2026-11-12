@@ -1,7 +1,6 @@
 import { writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import open from 'open';
 import { profile } from './data.js';
 
 // Builds a valid vCard 3.0 string (broadest contact-app compatibility) with the
@@ -31,6 +30,7 @@ export async function writeAndOpenVCard(): Promise<void> {
   const file = join(tmpdir(), 'anthony-brignano.vcf');
   try {
     writeFileSync(file, buildVCard(), 'utf8');
+    const { default: open } = await import('open');
     await open(file);
     console.log(`\nSaved my contact card to: ${file}\n`);
   } catch (err) {
