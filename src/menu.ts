@@ -1,8 +1,8 @@
-import { profile } from './data.js';
-import { focusSelect } from './focusSelect.js';
-import { renderQr } from './qrcode.js';
-import { danger, glyph, link, success } from './ui.js';
-import { buildVCard, writeAndOpenVCard } from './vcard.js';
+import { profile } from './data.ts';
+import { focusSelect } from './focusSelect.ts';
+import { renderQr } from './qrcode.ts';
+import { danger, glyph, link, success } from './ui.ts';
+import { buildVCard, writeAndOpenVCard } from './vcard.ts';
 
 // Every state ships with an icon and a word (design system §3): forest for
 // done, rust for gone wrong.

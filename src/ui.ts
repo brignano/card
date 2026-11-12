@@ -5,7 +5,7 @@
 import figures from '@inquirer/figures';
 import chalk from 'chalk';
 import stringWidth from 'string-width';
-import { dark, light, type Tokens } from './tokens.js';
+import { dark, light, type Tokens } from './tokens.ts';
 
 // --- Theme --------------------------------------------------------------------
 

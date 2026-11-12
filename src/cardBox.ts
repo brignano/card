@@ -1,7 +1,7 @@
 import boxen from 'boxen';
-import { profile } from './data.js';
-import type { LiveData } from './live.js';
-import { glyph, hyperlink, ink, link, slate, soft, tokens } from './ui.js';
+import { profile } from './data.ts';
+import type { LiveData } from './live.ts';
+import { glyph, hyperlink, ink, link, slate, soft, tokens } from './ui.ts';
 
 // Right-aligns labels to a common width so the values line up cleanly.
 const LABEL_WIDTH = 8;

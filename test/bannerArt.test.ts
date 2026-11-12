@@ -5,7 +5,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { renderArt, TEXT } from '../scripts/gen-banner.mjs';
-import { bannerArt, bannerText } from '../src/bannerArt.js';
+import { bannerArt, bannerText } from '../src/bannerArt.ts';
 
 test('the committed banner art matches what figlet renders', () => {
   assert.equal(bannerText, TEXT);

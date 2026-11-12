@@ -23,7 +23,7 @@ import {
   useState,
 } from '@inquirer/core';
 import chalk from 'chalk';
-import { focusInk, glyph, ink, link, soft, success } from './ui.js';
+import { focusInk, glyph, ink, link, soft, success } from './ui.ts';
 
 export interface FocusChoice<T> {
   name: string;

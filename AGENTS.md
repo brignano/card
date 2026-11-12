@@ -10,6 +10,10 @@ dependencies, so every package goes in `devDependencies`; a `dependencies`
 entry fails `test/pack.test.ts`. The banner lettering in `src/bannerArt.ts` is
 generated: after changing the word or the fonts, run `npm run gen:banner`.
 
+Node runs the TypeScript directly (`npm run dev`, `npm test`), so relative
+imports end in `.ts`, and `tsc` rejects syntax Node can't strip (enums,
+namespaces, parameter properties). The minimum Node is 22.18 (ADR 0004).
+
 ## Where things live
 
 - `proposals/`: designs and specs, one file each, indexed in
