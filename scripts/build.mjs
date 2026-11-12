@@ -2,18 +2,15 @@
 // dist/, with every dependency bundled in, so `npx brignano` downloads a single
 // small tarball instead of resolving and installing a dependency tree.
 //
-// `tsc` only type-checks (noEmit); esbuild emits.
+// `tsc` only type-checks (noEmit, run first by `npm run build`); esbuild emits.
 
-import { execFileSync } from 'node:child_process';
-import { cpSync, existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const dist = join(root, 'dist');
-
-execFileSync('npx', ['tsc', '--noEmit'], { cwd: root, stdio: 'inherit' });
 
 rmSync(dist, { recursive: true, force: true });
 
@@ -65,21 +62,22 @@ for (const input of Object.keys(result.metafile.inputs)) {
   const dir = packageDir(input);
   if (!dir || packages.has(dir)) continue;
   const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'));
-  const file = [
-    'LICENSE',
-    'LICENSE.md',
-    'LICENSE.txt',
-    'license',
-    'license.md',
-    'LICENCE',
-  ]
-    .map((name) => join(dir, name))
-    .find((path) => existsSync(path));
+  // Names vary: LICENSE, license.md, LICENCE, LICENSE-MIT.txt, …
+  const file = readdirSync(dir).find((name) => /^licen[sc]e/i.test(name));
   packages.set(dir, {
     id: `${pkg.name}@${pkg.version}`,
-    license: typeof pkg.license === 'string' ? pkg.license : 'see package',
-    text: file ? readFileSync(file, 'utf8').trim() : '(no licence file in the package)',
+    // Old packages use `licenses: [{ type }]` instead of an SPDX string.
+    license: pkg.license?.type ?? pkg.license ?? pkg.licenses?.[0]?.type ?? 'unknown',
+    text: file
+      ? readFileSync(join(dir, file), 'utf8').trim()
+      : '(no licence file in the package)',
   });
+}
+
+// Fail the build rather than ship someone's code without its licence text.
+const unlicensed = [...packages.values()].filter((p) => p.text.startsWith('('));
+if (unlicensed.length > 0) {
+  throw new Error(`No licence file found for: ${unlicensed.map((p) => p.id).join(', ')}`);
 }
 
 const notices = [...packages.values()]

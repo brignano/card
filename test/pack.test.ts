@@ -14,7 +14,7 @@ import {
   rmSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { after, before, test } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -37,8 +37,9 @@ function run(...args: string[]): string {
 before(() => {
   dir = mkdtempSync(join(tmpdir(), 'brignano-pack-'));
   const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-  // npm prints lifecycle output ahead of `--json`, so find the tarball on disk
-  // rather than parsing stdout.
+  // `npm pack` always runs `prepare`, so the tarball comes from a fresh build.
+  // It prints that build's output ahead of `--json`, so find the tarball on
+  // disk rather than parsing stdout.
   execFileSync(npm, ['pack', '--pack-destination', dir], {
     cwd: root,
     stdio: 'ignore',
@@ -78,15 +79,18 @@ test('every lazily loaded chunk imports cleanly', async () => {
 
 // clipboardy and open resolve these relative to the chunk they were bundled into.
 test('the clipboard and browser helpers sit where the chunks look for them', () => {
-  const pkg = join(dir, 'package', 'dist');
+  const chunks = join(dir, 'package', 'dist', 'chunks');
+  const chunkOf = (name: string) => {
+    const file = readdirSync(chunks).find((f) => f.startsWith(`${name}-`));
+    assert.ok(file, `no ${name} chunk: the helper paths below assume one`);
+    return join(chunks, file);
+  };
   const mode = process.platform === 'win32' ? constants.F_OK : constants.X_OK;
-  accessSync(join(pkg, 'fallbacks', 'linux', 'xsel'), mode);
-  accessSync(join(pkg, 'chunks', 'xdg-open'), mode);
-  accessSync(join(pkg, 'fallbacks', 'windows', 'clipboard_x86_64.exe'));
-  assert.ok(
-    readdirSync(join(pkg, 'chunks')).some((name) => name.startsWith('clipboardy-')),
-  );
-  assert.ok(readdirSync(join(pkg, 'chunks')).some((name) => name.startsWith('open-')));
+  // clipboardy: `../fallbacks/…` from its own file; open: `./xdg-open`.
+  const clipboardy = dirname(chunkOf('clipboardy'));
+  accessSync(join(clipboardy, '..', 'fallbacks', 'linux', 'xsel'), mode);
+  accessSync(join(clipboardy, '..', 'fallbacks', 'windows', 'clipboard_x86_64.exe'));
+  accessSync(join(dirname(chunkOf('open')), 'xdg-open'), mode);
 });
 
 test('third-party licences ship with the bundle', () => {

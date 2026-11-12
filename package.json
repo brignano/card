@@ -12,8 +12,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "node scripts/build.mjs",
-    "gen:banner": "node scripts/gen-banner.mjs",
+    "build": "tsc --noEmit && node scripts/build.mjs",
+    "gen:banner": "node scripts/gen-banner.mjs && biome format --write src/bannerArt.ts",
     "dev": "tsx src/card.ts",
     "start": "node dist/card.js",
     "lint": "biome check .",

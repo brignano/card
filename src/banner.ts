@@ -16,7 +16,9 @@ const FONTS: ReadonlyArray<{ font: keyof typeof bannerArt; minColumns: number }>
 // padded to the same width so per-column effects line up.
 function bannerLines(columns = termWidth()): string[] {
   const choice = FONTS.find((f) => columns >= f.minColumns);
-  const lines: string[] = choice ? [...bannerArt[choice.font]] : [bannerText.toUpperCase()];
+  const lines: string[] = choice
+    ? [...bannerArt[choice.font]]
+    : [bannerText.toUpperCase()];
   while (lines.length > 0 && (lines.at(-1) ?? '').trim() === '') lines.pop();
   const width = Math.max(...lines.map((l) => l.length), 1);
   return lines.map((l) => l.padEnd(width));

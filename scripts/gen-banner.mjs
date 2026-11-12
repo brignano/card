@@ -5,7 +5,6 @@
 // changing the word or the fonts; test/bannerArt.test.ts fails if the committed
 // file drifts from what figlet produces.
 
-import { execFileSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import figlet from 'figlet';
@@ -32,6 +31,5 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     '',
   ].join('\n');
   writeFileSync(target, source);
-  // Let Biome settle quotes and wrapping so the file passes `npm run lint`.
-  execFileSync('npx', ['biome', 'format', '--write', target], { stdio: 'inherit' });
+  // `npm run gen:banner` then has Biome settle quotes and wrapping.
 }
