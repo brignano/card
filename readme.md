@@ -128,7 +128,7 @@ The licences of the bundled packages ship in `dist/THIRD-PARTY-LICENSES.txt`.
 
 ## Notes
 
-- Links printed in the card are cmd/ctrl+clickable in supported terminals.
+- Links in the card are real terminal hyperlinks (OSC 8) where the terminal supports them, so the email opens your mail client and the latest-repo name opens the repo. Piped output, `NO_COLOR`, CI and consoles without full Unicode get the plain text, unchanged.
 - The `--download` flag is deprecated and now opens the resume in your browser instead of writing a local file.
 
 ## Credits

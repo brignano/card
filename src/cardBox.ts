@@ -1,7 +1,7 @@
 import boxen from 'boxen';
 import { profile } from './data.js';
 import type { LiveData } from './live.js';
-import { glyph, ink, link, slate, soft, tokens } from './ui.js';
+import { glyph, hyperlink, ink, link, slate, soft, tokens } from './ui.js';
 
 // Right-aligns labels to a common width so the values line up cleanly.
 const LABEL_WIDTH = 8;
@@ -15,9 +15,9 @@ function row(name: string, value: string): string {
 
 // A URL where only the handle is emphasised: the scheme and host stay regular,
 // so the eye lands on the part that is actually mine. Cobalt throughout,
-// because the whole thing is clickable.
+// because the whole thing is clickable — and linked, where the terminal can.
 function url(prefix: string, handle: string): string {
-  return `${link(prefix)}${link.bold(handle)}`;
+  return hyperlink(`${link(prefix)}${link.bold(handle)}`, `${prefix}${handle}`);
 }
 
 interface CardOptions {
@@ -33,8 +33,8 @@ export function renderCard({ live }: CardOptions): string {
     '',
     row('GitHub', url('https://github.com/', profile.username)),
     row('LinkedIn', url('https://linkedin.com/in/', profile.username)),
-    row('Website', link(profile.website)),
-    row('Email', link(profile.email)),
+    row('Website', hyperlink(link(profile.website), profile.website)),
+    row('Email', hyperlink(link(profile.email), `mailto:${profile.email}`)),
   ];
 
   if (live) {
@@ -43,7 +43,8 @@ export function renderCard({ live }: CardOptions): string {
       `${ink.bold(live.publicRepos)} ${soft('repos')}`,
     ];
     if (live.latestRepo) {
-      parts.push(`${soft('latest')} ${link(live.latestRepo.name)}`);
+      const { name, url: repoUrl } = live.latestRepo;
+      parts.push(`${soft('latest')} ${hyperlink(link(name), repoUrl)}`);
     }
     lines.push('', row('Stats', parts.join(slate('  ·  '))));
   }

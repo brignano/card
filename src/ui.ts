@@ -72,6 +72,32 @@ export const glyph: { [K in keyof typeof GLYPHS]: string } = Object.fromEntries(
   Object.entries(GLYPHS).map(([name, byTier]) => [name, byTier[tier]]),
 ) as { [K in keyof typeof GLYPHS]: string };
 
+// --- Hyperlinks ---------------------------------------------------------------
+
+// OSC 8 makes a run of text a real link, so the email (a `mailto:`) and a repo
+// name are clickable, not just things that happen to look like URLs. Terminals
+// that don't know the sequence ignore it, but a pipe, a dumb terminal or the
+// legacy Windows console would get it as noise, so it is only written where the
+// rest of the card's styling is: a colour TTY with full glyph support.
+export function supportsHyperlinks(
+  env: NodeJS.ProcessEnv = process.env,
+  isTTY: boolean = Boolean(process.stdout.isTTY),
+  glyphTier: GlyphTier = tier,
+): boolean {
+  return isTTY && glyphTier === 'full' && env.TERM !== 'dumb' && !env.CI && !env.NO_COLOR;
+}
+
+const hyperlinks = supportsHyperlinks();
+
+// Links `text` to `url`. The text is returned untouched when hyperlinks are off,
+// and when the target holds a control character: one target (the latest repo)
+// comes from the network, and an escape in it could end the sequence early.
+export function hyperlink(text: string, url: string, enabled = hyperlinks): string {
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: matching them is the point
+  if (!enabled || /[\u0000-\u001f\u007f-\u009f]/.test(url)) return text;
+  return `\u001b]8;;${url}\u0007${text}\u001b]8;;\u0007`;
+}
+
 // --- Layout -------------------------------------------------------------------
 
 // Mirrors boxen's fallback order so our centering agrees with its `float: 'center'`.
