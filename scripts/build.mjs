@@ -25,7 +25,7 @@ const result = await build({
   chunkNames: 'chunks/[name]-[hash]',
   format: 'esm',
   platform: 'node',
-  target: 'node20',
+  target: 'node22',
   minify: true,
   legalComments: 'none',
   metafile: true,

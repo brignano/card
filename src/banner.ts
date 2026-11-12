@@ -1,7 +1,7 @@
 import chalk from 'chalk';
-import { bannerArt, bannerText } from './bannerArt.js';
-import { sleep } from './reveal.js';
-import { center, mix, paintGradient, sample, termWidth, tokens } from './ui.js';
+import { bannerArt, bannerText } from './bannerArt.ts';
+import { sleep } from './reveal.ts';
+import { center, mix, paintGradient, sample, termWidth, tokens } from './ui.ts';
 
 // Fonts in order of preference, with the terminal width each one needs. The
 // widest that fits wins; on a very narrow terminal we fall back to plain text so

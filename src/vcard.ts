@@ -1,7 +1,7 @@
 import { writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { profile } from './data.js';
+import { profile } from './data.ts';
 
 // Builds a valid vCard 3.0 string (broadest contact-app compatibility) with the
 // spec-required CRLF line endings.

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-import { animateBanner, renderBanner } from './banner.js';
-import { renderCard } from './cardBox.js';
-import { funFacts, liveFact, type NonEmpty, pick, profile, taglines } from './data.js';
+import { animateBanner, renderBanner } from './banner.ts';
+import { renderCard } from './cardBox.ts';
+import { funFacts, liveFact, type NonEmpty, pick, profile, taglines } from './data.ts';
 import {
   isInteractive,
   parseFlags,
@@ -10,11 +10,11 @@ import {
   shouldAnimate,
   shouldFetchLive,
   unknownFlags,
-} from './env.js';
-import { fetchLive, type LiveData } from './live.js';
-import { promptForAction, quit, sendEmail, viewResume } from './menu.js';
-import { renderQr } from './qrcode.js';
-import { reveal, sleep } from './reveal.js';
+} from './env.ts';
+import { fetchLive, type LiveData } from './live.ts';
+import { promptForAction, quit, sendEmail, viewResume } from './menu.ts';
+import { renderQr } from './qrcode.ts';
+import { reveal, sleep } from './reveal.ts';
 import {
   attention,
   center,
@@ -24,8 +24,8 @@ import {
   mark,
   soft,
   withHiddenCursor,
-} from './ui.js';
-import { writeAndOpenVCard } from './vcard.js';
+} from './ui.ts';
+import { writeAndOpenVCard } from './vcard.ts';
 
 function printHelp(): void {
   console.log('\nUsage: npx brignano [options]\n');

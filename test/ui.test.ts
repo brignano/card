@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import boxen from 'boxen';
 import stringWidth from 'string-width';
-import { hyperlink, supportsHyperlinks } from '../src/ui.js';
+import { hyperlink, supportsHyperlinks } from '../src/ui.ts';
 
 const OPEN = '\u001b]8;;';
 const BEL = '\u0007';

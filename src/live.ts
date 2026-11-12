@@ -1,4 +1,4 @@
-import { profile } from './data.js';
+import { profile } from './data.ts';
 
 export interface LiveData {
   followers: number;

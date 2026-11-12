@@ -6,8 +6,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { render } from '@inquirer/testing';
 import chalk from 'chalk';
-import { focusSelectPrompt } from '../src/focusSelect.js';
-import { tokens } from '../src/ui.js';
+import { focusSelectPrompt } from '../src/focusSelect.ts';
+import { tokens } from '../src/ui.ts';
 
 // `node --test` runs each file in a child process with FORCE_COLOR=1, which
 // drops chalk to 16 colours and strips the truecolour codes asserted below.

@@ -105,7 +105,7 @@ doesn't need to be installed locally.
 Source lives in `src/` (split into small modules — `card.ts` is the entry/`bin`
 target). `npm run build` type-checks with `tsc`, then bundles with
 [esbuild](https://esbuild.github.io) into `dist/` (`scripts/build.mjs`).
-`npm run dev` runs the TypeScript directly through `tsx`; `npm run lint` and
+`npm run dev` runs the TypeScript directly (Node strips the types itself); `npm run lint` and
 `npm run format` use [Biome](https://biomejs.dev).
 
 The published package has **no runtime dependencies**: everything is bundled, so
@@ -124,7 +124,7 @@ The licences of the bundled packages ship in `dist/THIRD-PARTY-LICENSES.txt`.
 
 ## Prerequisites
 
-- Node.js **>=20** (`npx` ships with npm).
+- Node.js **>=22.18** (`npx` ships with npm). CI tests 22, 24 and 26.
 
 ## Notes
 
