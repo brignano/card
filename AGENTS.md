@@ -10,6 +10,18 @@ dependencies, so every package goes in `devDependencies`; a `dependencies`
 entry fails `test/pack.test.ts`. The banner lettering in `src/bannerArt.ts` is
 generated: after changing the word or the fonts, run `npm run gen:banner`.
 
+## Where things live
+
+- `proposals/`: designs and specs, one file each, indexed in
+  `proposals/README.md`. Size M work starts here, with no code, and waits for
+  Anthony's approval.
+- `decisions/`: the decision log (ADRs), indexed in `decisions/README.md`. Read
+  it before changing the build or what gets published. A choice a future reader
+  would question gets a new ADR in the PR that makes it; ADRs are never edited
+  after merge.
+- `releases/`: release notes, one file per version.
+- There is no `docs/` and no architecture model (ADR 0003).
+
 ## How to release
 
 Only when Anthony says "publish X" explicitly, for that exact version.
