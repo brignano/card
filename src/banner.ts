@@ -86,12 +86,25 @@ export function renderBanner(tagline: string): string {
   );
 }
 
-// Writes a block of lines in place, overwriting the previous block of the same
-// height when `redraw` is set. Every line is erased to its end first so a
-// shorter line never leaves debris from the one it replaces.
-function draw(lines: string[], redraw: boolean): void {
+// Synchronized output (DEC mode 2026): the terminal holds what it is sent
+// between these and paints it in one go, so a slow terminal or an SSH link never
+// shows half a frame. Terminals that don't know the mode ignore both.
+const SYNC_START = '\u001b[?2026h';
+const SYNC_END = '\u001b[?2026l';
+
+// One frame of the animation as a single string: a block of lines, overwriting
+// the previous block of the same height when `redraw` is set. Every line is
+// erased to its end first so a shorter line never leaves debris from the one it
+// replaces.
+export function frameOutput(lines: string[], redraw: boolean): string {
   const out = lines.map((l) => `\r\u001b[2K${l}`).join('\n');
-  process.stdout.write(`${redraw ? `\u001b[${lines.length}A` : ''}${out}\n`);
+  const up = redraw ? `\u001b[${lines.length}A` : '';
+  return `${SYNC_START}${up}${out}\n${SYNC_END}`;
+}
+
+// Writes a frame in one call, so it also reaches the terminal in one piece.
+function draw(lines: string[], redraw: boolean): void {
+  process.stdout.write(frameOutput(lines, redraw));
 }
 
 // Animated splash. A light sweeps across the lettering from left to right,
