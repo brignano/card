@@ -71,23 +71,33 @@ export function readVersion(): string {
   }
 }
 
-const isCI = (): boolean => Boolean(process.env.CI);
+// What the checks below read from the process. A parameter (defaulting to the
+// real process) so tests can try every combination without touching globals.
+export interface Terminal {
+  env: NodeJS.ProcessEnv;
+  stdinIsTTY: boolean;
+  stdoutIsTTY: boolean;
+}
+
+const currentTerminal = (): Terminal => ({
+  env: process.env,
+  stdinIsTTY: Boolean(process.stdin.isTTY),
+  stdoutIsTTY: Boolean(process.stdout.isTTY),
+});
 
 // True only when we can safely show an interactive prompt.
-export function isInteractive(flags: Flags): boolean {
-  return Boolean(
-    process.stdout.isTTY && process.stdin.isTTY && !isCI() && !flags.noPrompt,
-  );
+export function isInteractive(flags: Flags, term: Terminal = currentTerminal()): boolean {
+  return term.stdoutIsTTY && term.stdinIsTTY && !term.env.CI && !flags.noPrompt;
 }
 
 // True only when the reveal animation should play.
-export function shouldAnimate(flags: Flags): boolean {
-  return Boolean(
-    process.stdout.isTTY &&
-      !isCI() &&
-      !flags.noPrompt &&
-      !flags.noAnimation &&
-      !process.env.NO_COLOR,
+export function shouldAnimate(flags: Flags, term: Terminal = currentTerminal()): boolean {
+  return (
+    term.stdoutIsTTY &&
+    !term.env.CI &&
+    !flags.noPrompt &&
+    !flags.noAnimation &&
+    !term.env.NO_COLOR
   );
 }
 

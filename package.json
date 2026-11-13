@@ -18,6 +18,7 @@
     "start": "node dist/card.js",
     "lint": "biome check .",
     "format": "biome check --write .",
+    "pretest": "npm run build",
     "test": "node dist/card.js --no-prompt && node --test test/*.test.ts",
     "prepare": "npm run build"
   },
