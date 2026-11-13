@@ -19,28 +19,50 @@ export function isLightTerminal(env = process.env): boolean {
   return bg === 7 || bg === 15;
 }
 
-export const tokens: Tokens = isLightTerminal() ? light : dark;
+// The palette and the role styles built from it. They start from `COLORFGBG`
+// (then dark), which is all a pipe or CI can know, and `applyTheme` swaps them
+// once at startup if the terminal reports its real background. They are `let`
+// so every importer sees the swap; nothing may copy them at import time.
+export let tokens: Tokens = isLightTerminal() ? light : dark;
 
 // Styles by role, so no module outside tokens.ts ever names a hex.
-export const ink = chalk.hex(tokens.ink);
-export const soft = chalk.hex(tokens.inkSoft);
-export const slate = chalk.hex(tokens.slate);
-export const link = chalk.hex(tokens.link);
-export const success = chalk.hex(tokens.success);
-export const attention = chalk.hex(tokens.attention);
-export const danger = chalk.hex(tokens.danger);
-export const mark = chalk.hex(tokens.mark[1]);
+export let ink = chalk.hex(tokens.ink);
+export let soft = chalk.hex(tokens.inkSoft);
+export let slate = chalk.hex(tokens.slate);
+export let link = chalk.hex(tokens.link);
+export let success = chalk.hex(tokens.success);
+export let attention = chalk.hex(tokens.attention);
+export let danger = chalk.hex(tokens.danger);
+export let mark = chalk.hex(tokens.mark[1]);
+
+// Switches every style to the light or dark palette. Call it before anything
+// renders: text already written keeps the colours it was written in.
+export function applyTheme(isLight: boolean): void {
+  tokens = isLight ? light : dark;
+  ink = chalk.hex(tokens.ink);
+  soft = chalk.hex(tokens.inkSoft);
+  slate = chalk.hex(tokens.slate);
+  link = chalk.hex(tokens.link);
+  success = chalk.hex(tokens.success);
+  attention = chalk.hex(tokens.attention);
+  danger = chalk.hex(tokens.danger);
+  mark = chalk.hex(tokens.mark[1]);
+}
 
 // Emphasis falls off from the live menu row through the cobalt ladder and lands
 // on the neutral: the row itself at --i-pressed, one away at --i-hover, two away
 // at --i-ink, everything beyond that at --n-700. One hue throughout — only the
 // lightness moves — so the menu stays entirely inside the affordance layer and
 // nothing but cobalt ever says "you can act on this".
-const FOCUS_RAMP = [tokens.linkPressed, tokens.linkHover, tokens.link] as const;
+const focusRamp = (): readonly string[] => [
+  tokens.linkPressed,
+  tokens.linkHover,
+  tokens.link,
+];
 
 // `distance` is rows between this row and the cursor; the sign doesn't matter.
 export function focusInk(distance: number): string {
-  return FOCUS_RAMP[Math.abs(distance)] ?? tokens.inkSoft;
+  return focusRamp()[Math.abs(distance)] ?? tokens.inkSoft;
 }
 
 // --- Glyphs -------------------------------------------------------------------

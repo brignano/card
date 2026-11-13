@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 
+import {
+  backgroundQuerySettled,
+  isLightBackground,
+  queryBackground,
+} from './background.ts';
 import { animateBanner, renderBanner } from './banner.ts';
 import { renderCard } from './cardBox.ts';
 import { funFacts, liveFact, type NonEmpty, pick, profile, taglines } from './data.ts';
@@ -16,6 +21,7 @@ import { promptForAction, quit, sendEmail, viewResume } from './menu.ts';
 import { renderQr } from './qrcode.ts';
 import { reveal, sleep } from './reveal.ts';
 import {
+  applyTheme,
   attention,
   center,
   glyph,
@@ -67,6 +73,12 @@ async function main(): Promise<void> {
     console.log(readVersion());
     return;
   }
+
+  // Settle the palette before anything is styled. A terminal that reports its
+  // background decides it; otherwise the `COLORFGBG` guess made at import stands.
+  const background = await queryBackground();
+  if (background) applyTheme(isLightBackground(background));
+
   if (flags.view || flags.download) {
     if (flags.download) {
       console.warn(
@@ -118,6 +130,10 @@ async function main(): Promise<void> {
   console.log();
 
   if (!interactive) return;
+
+  // A terminal that answered the background query late may still be sending;
+  // let that finish before the menu starts reading keys.
+  await backgroundQuerySettled();
 
   // The menu comes back after every action, so visitors can copy an email, open
   // a link and grab the QR in one sitting. "Quit" (or Ctrl+C) ends it.

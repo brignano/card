@@ -38,13 +38,16 @@ const GLINT = 3; // half-width of the glint, in columns
 // The banner is the monogram: identity, inked with `--mark`. The sweep's crest
 // is the mark pushed most of the way to the page's ink; letters the light hasn't
 // reached yet sit at the strong-border neutral, like an unlit surface.
-const CREST = mix(tokens.mark.at(-1) ?? tokens.mark[1], tokens.ink, 0.75);
-const GHOST = tokens.lineStrong;
+// Functions, not constants: the theme is settled at startup, after import.
+const crest = (): string => mix(tokens.mark.at(-1) ?? tokens.mark[1], tokens.ink, 0.75);
+const ghost = (): string => tokens.lineStrong;
 
 // Paints one frame of the art. Pure: same inputs, same string.
 function paintFrame(art: string[], { revealEdge, glintAt }: FrameOptions = {}): string {
   const width = art[0]?.length ?? 1;
   const last = Math.max(1, width - 1);
+  const CREST = crest();
+  const GHOST = ghost();
   return art
     .map((line) => {
       let out = '';
@@ -135,7 +138,7 @@ export async function animateBanner(tagline: string): Promise<void> {
   await sleep(80);
   const fade = [0.25, 0.55, 0.8, 1];
   for (const t of fade) {
-    show(settled, subtitle(tagline, mix(GHOST, tokens.inkSoft, t)));
+    show(settled, subtitle(tagline, mix(ghost(), tokens.inkSoft, t)));
     await sleep(70);
   }
 }
