@@ -122,7 +122,7 @@ export function buildChoices(): MenuChoice[] {
 // Shows the action menu and returns the chosen handler. Ctrl+C / Esc throws an
 // `ExitPromptError`, which the entry point treats as a normal exit.
 // Cobalt is the "you can act on this" hue, so the whole menu lives in it: the
-// live row at --i-pressed, its neighbours stepping down --i-hover and --i-ink,
+// live row at --i-ink-hover, its neighbours one step down at --i-ink,
 // the rest on the neutral. Moving the cursor moves the emphasis with it, and
 // because only the lightness changes, no second hue is ever introduced — the
 // identity amber stays on the banner, where DESIGN.md §3 keeps it.

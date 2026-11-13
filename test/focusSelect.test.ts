@@ -44,14 +44,14 @@ test('enter answers with the live row', async () => {
 
 test('arrows wrap at both ends', async () => {
   const { answer, events, getScreen } = await open();
-  const live = () => inkOf(getScreen({ raw: true }), 'Echo') === rgb(tokens.linkPressed);
+  const live = () => inkOf(getScreen({ raw: true }), 'Echo') === rgb(tokens.linkHover);
   events.keypress('up'); // first row -> last
   assert.ok(live(), 'up from the first row lands on the last');
   events.keypress('down'); // last row -> first
   assert.ok(!live(), 'down from the last row leaves it');
   assert.equal(
     inkOf(getScreen({ raw: true }), 'Alpha'),
-    rgb(tokens.linkPressed),
+    rgb(tokens.linkHover),
     'down from the last row lands on the first',
   );
   events.keypress('up');
@@ -82,12 +82,12 @@ test('the live row shows its description', async () => {
   await answer;
 });
 
-test('emphasis falls off down the cobalt ladder from the live row', async () => {
+test('emphasis falls off through the cobalt inks from the live row', async () => {
   const { answer, events, getScreen } = await open();
   const screen = getScreen({ raw: true });
-  assert.equal(inkOf(screen, 'Alpha'), rgb(tokens.linkPressed), 'live row');
-  assert.equal(inkOf(screen, 'Bravo'), rgb(tokens.linkHover), 'one away');
-  assert.equal(inkOf(screen, 'Charlie'), rgb(tokens.link), 'two away');
+  assert.equal(inkOf(screen, 'Alpha'), rgb(tokens.linkHover), 'live row');
+  assert.equal(inkOf(screen, 'Bravo'), rgb(tokens.link), 'one away');
+  assert.equal(inkOf(screen, 'Charlie'), rgb(tokens.inkSoft), 'two away: neutral');
   assert.equal(inkOf(screen, 'Delta'), rgb(tokens.inkSoft), 'three away: neutral');
   assert.equal(inkOf(screen, 'Echo'), rgb(tokens.inkSoft), 'four away: neutral');
   events.keypress('enter');
@@ -99,11 +99,11 @@ test('the falloff follows the cursor, both directions', async () => {
   events.keypress('down');
   events.keypress('down');
   const screen = getScreen({ raw: true });
-  assert.equal(inkOf(screen, 'Charlie'), rgb(tokens.linkPressed));
-  assert.equal(inkOf(screen, 'Bravo'), rgb(tokens.linkHover));
-  assert.equal(inkOf(screen, 'Delta'), rgb(tokens.linkHover));
-  assert.equal(inkOf(screen, 'Alpha'), rgb(tokens.link));
-  assert.equal(inkOf(screen, 'Echo'), rgb(tokens.link));
+  assert.equal(inkOf(screen, 'Charlie'), rgb(tokens.linkHover));
+  assert.equal(inkOf(screen, 'Bravo'), rgb(tokens.link));
+  assert.equal(inkOf(screen, 'Delta'), rgb(tokens.link));
+  assert.equal(inkOf(screen, 'Alpha'), rgb(tokens.inkSoft));
+  assert.equal(inkOf(screen, 'Echo'), rgb(tokens.inkSoft));
   events.keypress('enter');
   await answer;
 });
