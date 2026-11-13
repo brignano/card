@@ -1,9 +1,14 @@
-// Promisified wrapper around qrcode-terminal's callback API. `small: true` keeps
-// the code compact enough for most terminals. Loaded on demand: most runs never
-// draw a QR code.
-export async function renderQr(text: string): Promise<string> {
-  const { default: qrcode } = await import('qrcode-terminal');
-  return new Promise((resolve) => {
-    qrcode.generate(text, { small: true }, (output: string) => resolve(output));
-  });
+import { renderUnicodeCompact } from 'uqr';
+
+// Draws `text` as a QR code in half-block characters, two modules per line, so
+// it stays compact enough for most terminals. The light modules are the filled
+// blocks, which suits the dark terminals most people run `npx` in.
+//
+// Ends with a newline, as qrcode-terminal's output did, so the blank line the
+// callers leave under the code is unchanged.
+//
+// Callers import this module lazily (`await import('./qrcode.ts')`): most runs
+// never draw a QR code, so the encoder stays out of the startup path.
+export function renderQr(text: string): string {
+  return `${renderUnicodeCompact(text)}\n`;
 }
