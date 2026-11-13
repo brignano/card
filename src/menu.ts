@@ -1,6 +1,5 @@
 import { profile } from './data.ts';
 import { focusSelect } from './focusSelect.ts';
-import { renderQr } from './qrcode.ts';
 import { danger, glyph, link, success } from './ui.ts';
 import { buildVCard, writeAndOpenVCard } from './vcard.ts';
 
@@ -54,7 +53,8 @@ export async function viewResume(): Promise<void> {
 }
 
 export async function showContactQr(): Promise<void> {
-  const qr = await renderQr(buildVCard());
+  const { renderQr } = await import('./qrcode.ts');
+  const qr = renderQr(buildVCard());
   console.log('\nScan to save my contact:\n');
   console.log(qr);
 }

@@ -18,7 +18,6 @@ import {
 } from './env.ts';
 import { fetchLive, type LiveData } from './live.ts';
 import { promptForAction, quit, sendEmail, viewResume } from './menu.ts';
-import { renderQr } from './qrcode.ts';
 import { reveal, sleep } from './reveal.ts';
 import {
   applyTheme,
@@ -89,7 +88,8 @@ async function main(): Promise<void> {
   }
   if (flags.email) return sendEmail();
   if (flags.qr) {
-    console.log(await renderQr(profile.website));
+    const { renderQr } = await import('./qrcode.ts');
+    console.log(renderQr(profile.website));
     console.log(`  ${link(profile.website)}\n`);
     return;
   }
