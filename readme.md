@@ -38,6 +38,10 @@ shared design system behind `brignano.io`, and follow its "one hue, one meaning"
 rule: the banner is the monogram and takes the larch-amber **mark**; anything you
 can act on (links, the selected menu row) is **cobalt**; confirmations are
 **forest**, failures are **rust**, and everything else sits on the neutral ramp.
+Cobalt is always drawn as text, so it uses the two ink steps: links and the rows
+beside the selected one take `--i-ink`, and the selected row takes
+`--i-ink-hover`. The fill steps (`--i`, `--i-hover`, `--i-pressed`) are not
+used: they are too deep to read on a dark terminal.
 The hex values live in one place, `src/tokens.ts`, named after the CSS custom
 properties they mirror; at startup the card asks the terminal for its
 background colour (OSC 11) and picks the light set when it is light. A terminal
