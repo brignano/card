@@ -4,6 +4,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { type ParseArgsOptionsConfig, parseArgs } from 'node:util';
 
 export interface Flags {
   help: boolean;
@@ -17,8 +18,9 @@ export interface Flags {
   noAnimation: boolean;
 }
 
-// Every accepted token, grouped by the flag it sets. Also drives unknown-flag
-// detection below, so adding a flag here is the only edit needed.
+// Every accepted token, grouped by the flag it sets. The single source of truth:
+// it generates the `parseArgs` options and drives unknown-option detection
+// below, so adding a flag here is the only edit needed.
 const FLAG_ALIASES = {
   help: ['--help', '-h'],
   version: ['--version', '-v', '-V'],
@@ -31,30 +33,78 @@ const FLAG_ALIASES = {
   noAnimation: ['--no-animation'],
 } as const satisfies Record<keyof Flags, readonly string[]>;
 
-const KNOWN_TOKENS = new Set<string>(Object.values(FLAG_ALIASES).flat());
+const FLAG_OF = new Map<string, keyof Flags>(
+  Object.entries(FLAG_ALIASES).flatMap(([flag, tokens]) =>
+    tokens.map((token): [string, keyof Flags] => [token, flag as keyof Flags]),
+  ),
+);
 
-export function hasFlag(argv: string[], names: readonly string[]): boolean {
-  return names.some((n) => argv.includes(n));
+// Each long token becomes a boolean option. A group's first short letter rides
+// on its first long name; any other short letter (`-V`) is its own option.
+// Every one of them folds back into its flag through `FLAG_OF`.
+const OPTIONS: ParseArgsOptionsConfig = {};
+for (const tokens of Object.values(FLAG_ALIASES)) {
+  const longs = tokens.filter((t) => t.startsWith('--')).map((t) => t.slice(2));
+  const shorts = tokens.filter((t) => !t.startsWith('--')).map((t) => t.slice(1));
+  for (const name of longs) OPTIONS[name] = { type: 'boolean' };
+  for (const [i, letter] of shorts.entries()) {
+    const owner = i === 0 ? longs[0] : undefined;
+    OPTIONS[owner ?? letter] = { type: 'boolean', short: letter };
+  }
+}
+
+interface Parsed {
+  flags: Flags;
+  // Anything we don't accept, as the user typed it: unknown options, an option
+  // given a value (`--qr=1`), and stray positional arguments.
+  unknown: string[];
+}
+
+function parse(argv: string[]): Parsed {
+  const flags: Flags = {
+    help: false,
+    version: false,
+    view: false,
+    download: false,
+    email: false,
+    qr: false,
+    vcard: false,
+    noPrompt: false,
+    noAnimation: false,
+  };
+  const unknown: string[] = [];
+  // Non-strict, so unknown options come back as tokens instead of throwing, and
+  // combined short flags (`-rv`) are split even when one letter is unknown.
+  const { tokens } = parseArgs({
+    args: argv,
+    options: OPTIONS,
+    strict: false,
+    allowPositionals: true,
+    tokens: true,
+  });
+  for (const token of tokens) {
+    if (token.kind === 'option') {
+      // `rawName` is the token as typed, so `--V` doesn't pass for `-V`.
+      const flag = FLAG_OF.get(token.rawName);
+      if (flag && token.value === undefined) flags[flag] = true;
+      else if (token.inlineValue) unknown.push(argv[token.index] ?? token.rawName);
+      else unknown.push(token.rawName);
+    } else {
+      // A positional, or `--` (which ends options and was never accepted).
+      unknown.push(argv[token.index] ?? '');
+    }
+  }
+  return { flags, unknown };
 }
 
 export function parseFlags(argv: string[]): Flags {
-  return {
-    help: hasFlag(argv, FLAG_ALIASES.help),
-    version: hasFlag(argv, FLAG_ALIASES.version),
-    view: hasFlag(argv, FLAG_ALIASES.view),
-    download: hasFlag(argv, FLAG_ALIASES.download),
-    email: hasFlag(argv, FLAG_ALIASES.email),
-    qr: hasFlag(argv, FLAG_ALIASES.qr),
-    vcard: hasFlag(argv, FLAG_ALIASES.vcard),
-    noPrompt: hasFlag(argv, FLAG_ALIASES.noPrompt),
-    noAnimation: hasFlag(argv, FLAG_ALIASES.noAnimation),
-  };
+  return parse(argv).flags;
 }
 
-// Anything that looks like a flag but isn't one we accept. Returned rather than
-// thrown so the caller decides how loudly to complain.
+// Everything we don't accept, in order. Returned rather than thrown so the
+// caller decides how loudly to complain.
 export function unknownFlags(argv: string[]): string[] {
-  return argv.filter((arg) => arg.startsWith('-') && !KNOWN_TOKENS.has(arg));
+  return parse(argv).unknown;
 }
 
 // Read the version straight from the published package.json. It isn't in the

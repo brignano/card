@@ -54,9 +54,24 @@ test('typos and unsupported flags are reported, in order', () => {
   ]);
 });
 
-test('arguments that do not start with a dash are not flags', () => {
-  // Today positionals are ignored; brignano/card#34 makes them an error.
-  assert.deepEqual(unknownFlags(['hello', 'brignano']), []);
+test('combined short flags set each flag', () => {
+  assert.deepEqual(parseFlags(['-rv']), { ...NONE, view: true, version: true });
+  assert.deepEqual(parseFlags(['-he']), { ...NONE, help: true, email: true });
+  assert.deepEqual(unknownFlags(['-rv']), []);
+});
+
+test('an unknown letter in a combined short flag is reported', () => {
+  assert.deepEqual(unknownFlags(['-rx']), ['-x']);
+});
+
+test('a short letter only counts in its short form', () => {
+  assert.deepEqual(unknownFlags(['--V', '--h']), ['--V', '--h']);
+});
+
+test('stray positional arguments are reported like unknown flags', () => {
+  assert.deepEqual(unknownFlags(['hello', 'brignano']), ['hello', 'brignano']);
+  assert.deepEqual(unknownFlags(['--qr', 'hello']), ['hello']);
+  assert.deepEqual(unknownFlags(['--', '--qr']), ['--', '--qr']);
 });
 
 const TTY: Terminal = { env: {}, stdinIsTTY: true, stdoutIsTTY: true };
