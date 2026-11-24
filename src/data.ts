@@ -39,10 +39,11 @@ export const funFacts: NonEmpty<string> = [
 export const liveFact =
   'The live stats above are pulled fresh from GitHub (with a strict timeout).';
 
-// Deterministic-enough pick without Math.random (kept simple + dependency-free).
+// Picks one item at random. Each call draws its own number, so the tagline and
+// the fun fact vary independently; tests pass `random` to stay deterministic.
 // The `?? items[0]` fallback is unreachable for a NonEmpty list, but it keeps the
 // return type honest under `noUncheckedIndexedAccess` without an assertion.
-export function pick<T>(items: NonEmpty<T>, seed = Date.now()): T {
-  const index = Math.floor(seed / 1000) % items.length;
+export function pick<T>(items: NonEmpty<T>, random = Math.random()): T {
+  const index = Math.floor(random * items.length);
   return items[index] ?? items[0];
 }
