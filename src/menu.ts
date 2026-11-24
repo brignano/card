@@ -53,8 +53,15 @@ export async function viewResume(): Promise<void> {
 }
 
 export async function showContactQr(): Promise<void> {
-  const { renderQr } = await import('./qrcode.ts');
-  const qr = renderQr(buildVCard());
+  const { qrWidth, renderQrIfFits } = await import('./qrcode.ts');
+  const vcard = buildVCard();
+  const qr = renderQrIfFits(vcard);
+  if (!qr) {
+    console.log(
+      `\nThe contact code needs a window ${qrWidth(vcard)} columns wide to scan. Widen this one and pick it again, or choose ${link('Save my contact card')}.\n`,
+    );
+    return;
+  }
   console.log('\nScan to save my contact:\n');
   console.log(qr);
 }

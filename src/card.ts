@@ -22,7 +22,7 @@ import { reveal, sleep } from './reveal.ts';
 import {
   applyTheme,
   attention,
-  center,
+  centerWrapped,
   glyph,
   ink,
   link,
@@ -48,7 +48,7 @@ function printHelp(): void {
 
 function farewell(): void {
   console.log(
-    `\n${center(`${mark(glyph.star)} ${ink('Thanks for stopping by — have a great day!')}`)}\n`,
+    `\n${centerWrapped(`${mark(glyph.star)} ${ink('Thanks for stopping by — have a great day!')}`)}\n`,
   );
 }
 
@@ -88,8 +88,10 @@ async function main(): Promise<void> {
   }
   if (flags.email) return sendEmail();
   if (flags.qr) {
-    const { renderQr } = await import('./qrcode.ts');
-    console.log(renderQr(profile.website));
+    const { renderQrIfFits } = await import('./qrcode.ts');
+    const qr = renderQrIfFits(profile.website);
+    // Too narrow to scan: the link on its own is still useful.
+    if (qr) console.log(qr);
     console.log(`  ${link(profile.website)}\n`);
     return;
   }
@@ -124,9 +126,11 @@ async function main(): Promise<void> {
   // The "live stats" fact only makes sense when the live line is on the card.
   const facts: NonEmpty<string> = live ? [...funFacts, liveFact] : funFacts;
   console.log(
-    center(`${soft('Tip:')} ${ink.bold('cmd/ctrl + click')} ${soft('the links above.')}`),
+    centerWrapped(
+      `${soft('Tip:')} ${ink.bold('cmd/ctrl + click')} ${soft('the links above.')}`,
+    ),
   );
-  console.log(center(soft(pick(facts))));
+  console.log(centerWrapped(soft(pick(facts))));
   console.log();
 
   if (!interactive) return;
