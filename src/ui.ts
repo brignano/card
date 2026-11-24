@@ -5,6 +5,7 @@
 import figures from '@inquirer/figures';
 import chalk from 'chalk';
 import stringWidth from 'string-width';
+import wrapAnsi from 'wrap-ansi';
 import { dark, light, type Tokens } from './tokens.ts';
 
 // --- Theme --------------------------------------------------------------------
@@ -138,6 +139,20 @@ export function center(text: string, width = termWidth()): string {
       return ' '.repeat(pad) + line;
     })
     .join('\n');
+}
+
+// Breaks `text` (colours and all) at word boundaries so no line is wider than
+// the terminal, then centers each line. Used for every sentence the card prints
+// under the banner, so a narrow window gets tidy centered lines instead of the
+// terminal chopping a long one mid-word against the left edge.
+export function centerWrapped(text: string, width = termWidth()): string {
+  return center(wrapAnsi(text, Math.max(1, width - 2), { hard: false }), width);
+}
+
+// How many columns `text` takes on screen: escapes and hyperlinks are free, wide
+// characters count double.
+export function visibleWidth(text: string): number {
+  return Math.max(0, ...text.split('\n').map((line) => stringWidth(line)));
 }
 
 // --- Colour math (dependency-free gradients) ---------------------------------

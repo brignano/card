@@ -1,7 +1,15 @@
 import chalk from 'chalk';
 import { bannerArt, bannerText } from './bannerArt.ts';
 import { sleep } from './reveal.ts';
-import { center, mix, paintGradient, sample, termWidth, tokens } from './ui.ts';
+import {
+  center,
+  centerWrapped,
+  mix,
+  paintGradient,
+  sample,
+  termWidth,
+  tokens,
+} from './ui.ts';
 
 // Fonts in order of preference, with the terminal width each one needs. The
 // widest that fits wins; on a very narrow terminal we fall back to plain text so
@@ -81,8 +89,9 @@ function subtitle(text: string, color: string = tokens.inkSoft): string {
 // Static, centered banner with the tagline beneath (non-animated path).
 export function renderBanner(tagline: string): string {
   const art = bannerLines();
-  return center(
-    [paintGradient(art.join('\n'), tokens.mark), '', subtitle(tagline)].join('\n'),
+  return (
+    center([paintGradient(art.join('\n'), tokens.mark), ''].join('\n')) +
+    `\n${centerWrapped(subtitle(tagline))}`
   );
 }
 
@@ -116,10 +125,16 @@ export async function animateBanner(tagline: string): Promise<void> {
   const art = bannerLines(columns);
   const width = art[0]?.length ?? 1;
   const pad = ' '.repeat(Math.max(0, Math.floor((columns - width) / 2)));
+  const wrapped = (text: string) =>
+    text ? centerWrapped(text, columns).split('\n') : [];
+  const subLines = wrapped(tagline).length;
   const frame = (body: string, sub = ''): string[] => [
     ...body.split('\n').map((l) => pad + l),
     '',
-    center(sub, columns),
+    // The tagline may wrap on a narrow window. Every frame is padded to the
+    // tagline's full height, before it fades in too, so each redraw moves back
+    // up exactly as many lines as the frame before it drew.
+    ...Array.from({ length: subLines }, (_, i) => wrapped(sub)[i] ?? ''),
   ];
 
   let drawn = false;
