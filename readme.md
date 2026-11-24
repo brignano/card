@@ -39,8 +39,8 @@ rule: the banner is the monogram and takes the larch-amber **mark**; anything yo
 can act on (links, the selected menu row) is **cobalt**; confirmations are
 **forest**, failures are **rust**, and everything else sits on the neutral ramp.
 Cobalt is always drawn as text, so it uses the two ink steps: links and the rows
-beside the selected one take `--i-ink`, and the selected row takes
-`--i-ink-hover`. The fill steps (`--i`, `--i-hover`, `--i-pressed`) are not
+beside the selected one take `--action-ink`, and the selected row takes
+`--action-ink-hover`. The fill steps (`--action`, `--action-hover`, `--action-pressed`) are not
 used: they are too deep to read on a dark terminal.
 The hex values live in one place, `src/tokens.ts`, named after the CSS custom
 properties they mirror; at startup the card asks the terminal for its

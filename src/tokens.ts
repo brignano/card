@@ -1,4 +1,4 @@
-// Colour tokens, copied from @brignano/design 0.9.0 (tokens.css) and named after
+// Colour tokens, copied from @brignano/design 0.17.0 (tokens.css) and named after
 // the CSS custom properties they mirror. A terminal can't load a stylesheet, so
 // this is the one file allowed to hold a hex: everything else styles by role.
 //
@@ -8,32 +8,32 @@
 // rest is a cool neutral ramp.
 //
 // Everything the card draws is text or a thin mark, so the cobalts copied here
-// are the two INK steps. The fill steps (--i, --i-hover, --i-pressed) are not
-// copied: since 0.9.0 they are deep fills under a white --on-i label in both
+// are the two INK steps. The fill steps (--action, --action-hover, --action-pressed) are not
+// copied: since 0.9.0 they are deep fills under a white --on-action label in both
 // themes, too dark to read as text on a dark terminal. If the card ever paints
-// a filled row, copy --i for the fill and --on-i for its label.
+// a filled row, copy --action for the fill and --on-action for its label.
 
 export interface Tokens {
-  /** --n-900: primary text. */
+  /** --neutral-900: primary text. */
   ink: string;
-  /** --n-700: secondary text. */
+  /** --neutral-700: secondary text. */
   inkSoft: string;
   /**
    * --slate: the quietest text step — row labels, separators, UI marks. It is
-   * n-600 in light and n-500 in dark, not n-500 in both: n-500 in light is
+   * neutral-600 in light and neutral-500 in dark, not neutral-500 in both: neutral-500 in light is
    * 3.44:1 and never carries text (DESIGN.md §10).
    */
   slate: string;
-  /** --n-300: strong border, pressed surface. Also the unlit banner letters. */
+  /** --neutral-300: strong border, pressed surface. Also the unlit banner letters. */
   lineStrong: string;
-  /** --i-ink: links, selection, anything actionable. Cobalt, OKLCH hue 256°. */
+  /** --action-ink: links, selection, anything actionable. Cobalt, OKLCH hue 256°. */
   link: string;
   /**
-   * --i-ink-hover: the emphatic ink step, a hovered link on the sites and the
+   * --action-ink-hover: the emphatic ink step, a hovered link on the sites and the
    * live menu row here. One hue, two lightnesses, so the menu can show
    * emphasis falling off from the live row without reaching for a second
    * colour. Note the step inverts between themes — in dark it is lighter than
-   * --i-ink, in light it is darker — so it is always the more emphatic one.
+   * --action-ink, in light it is darker — so it is always the more emphatic one.
    */
   linkHover: string;
   /** --success-ink. */

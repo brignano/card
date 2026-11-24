@@ -50,11 +50,11 @@ export function applyTheme(isLight: boolean): void {
 }
 
 // Emphasis falls off from the live menu row through the cobalt inks and lands
-// on the neutral: the row itself at --i-ink-hover, one away at --i-ink,
-// everything beyond that at --n-700. One hue throughout — only the lightness
+// on the neutral: the row itself at --action-ink-hover, one away at --action-ink,
+// everything beyond that at --neutral-700. One hue throughout — only the lightness
 // moves — so the menu stays entirely inside the affordance layer and nothing
 // but cobalt ever says "you can act on this". Ink steps only: the design
-// system's fill steps (--i-hover, --i-pressed) are too deep to read as text.
+// system's fill steps (--action-hover, --action-pressed) are too deep to read as text.
 const focusRamp = (): readonly string[] => [tokens.linkHover, tokens.link];
 
 // `distance` is rows between this row and the cursor; the sign doesn't matter.
